@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiencia Avatar Dalí - Pintura Interactiva</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos generales del cuerpo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Un gris muy claro, casi blanco */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        /* Contenedor principal para el contenido */
+        .container {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Estilos para el canvas de dibujo */
+        canvas {
+            border: 2px solid #e0e0e0; /* Borde gris claro */
+            border-radius: 0.75rem; /* Bordes redondeados */
+            background-color: #ffffff; /* Fondo blanco */
+            touch-action: none; /* Evita el desplazamiento en dispositivos táctiles al dibujar */
+            width: 100%; /* Asegura que el canvas ocupe todo el ancho disponible */
+            height: 320px; /* Altura fija, puedes ajustarla si lo necesitas */
+        }
+        /* Estilos para los botones de selección de color */
+        .color-button {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px; /* Completamente redondo */
+            border: 2px solid transparent; /* Borde transparente por defecto */
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s; /* Transiciones suaves */
+        }
+        .color-button:hover {
+            transform: scale(1.1); /* Efecto de escala al pasar el ratón */
+        }
+        /* Estilo para el botón de color seleccionado */
+        .color-button.selected {
+            border-color: #4a90e2; /* Borde azul para el color seleccionado */
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.5); /* Sombra azul para resaltar */
+        }
+        /* Estilos para los botones de acción (limpiar) */
+        .action-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .action-button:hover {
+            transform: translateY(-2px); /* Efecto de elevación al pasar el ratón */
+        }
+        /* Estilo específico para el botón de limpiar */
+        .clear-button {
+            background-color: #f56565; /* Rojo */
+            color: white;
+        }
+        .clear-button:hover {
+            background-color: #e53e3e; /* Rojo más oscuro al pasar el ratón */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-orange-700 text-white p-6 shadow-lg rounded-b-lg">
+        <div class="container mx-auto flex justify-center items-center">
+            <h1 class="text-3xl font-bold text-center">Experiencia Interactiva: Pintura y Arte</h1>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-6 my-8 bg-white rounded-lg shadow-xl">
+        <section id="painting-section" class="mb-8">
+            <h2 class="text-2xl font-semibold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2">¡Crea tu propia obra de arte y descubre la inspiración!</h2>
+            <p class="text-gray-700 mb-6">
+                Utiliza el ratón o el dedo para pintar en el lienzo. Selecciona tus colores favoritos y observa cómo tu estilo influye en la obra de arte sugerida.
+            </p>
+
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="flex-1 flex flex-col gap-4">
+                    <canvas id="drawingCanvas" class="w-full h-80 md:h-96"></canvas>
+
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Selecciona un color:</h3>
+                        <div id="colorPalette" class="flex flex-wrap gap-3 justify-center md:justify-start">
+                            <button class="color-button bg-red-500" data-color="#EF4444"></button>
+                            <button class="color-button bg-blue-500" data-color="#3B82F6"></button>
+                            <button class="color-button bg-green-500" data-color="#22C55E"></button>
+                            <button class="color-button bg-yellow-500" data-color="#FACC15"></button>
+                            <button class="color-button bg-purple-500" data-color="#A855F7"></button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center md:justify-start gap-4">
+                        <button id="clearButton" class="action-button clear-button">Limpiar Canvas</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex flex-col items-center justify-center text-center p-4 bg-orange-50 rounded-md shadow-sm">
+                    <h3 class="text-xl font-semibold text-orange-700 mb-4">Tu Inspiración de Arte:</h3>
+                    <img id="paintingImage" src="https://placehold.co/400x300/e0e0e0/555555?text=Pinta+para+ver+arte" alt="Imagen de Cuadro Inspirador" class="w-full max-h-64 object-contain rounded-lg shadow-md mb-4">
+                    <p id="paintingInfo" class="text-gray-600 text-sm">Pinta en el canvas para descubrir una obra de arte.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-orange-700 text-white p-6 mt-8 rounded-t-lg">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Blanca Cerveró Beltrán</p>
+            <p class="text-sm mt-2">Integración de la aplicación de pintura con predominancia de colores.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Obtención de elementos del DOM
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d'); // Contexto 2D para dibujar
+        const colorPalette = document.getElementById('colorPalette');
+        const clearButton = document.getElementById('clearButton');
+        const paintingImage = document.getElementById('paintingImage');
+        const paintingInfo = document.getElementById('paintingInfo');
+
+        // Variables de estado del dibujo
+        let isDrawing = false; // Indica si el ratón está presionado y dibujando
+        let lastX = 0; // Última posición X del ratón
+        let lastY = 0; // Última posición Y del ratón
+        let currentColor = '#EF4444'; // Color de dibujo actual, por defecto rojo
+        const colorCounts = {}; // Objeto para almacenar el "peso" de cada color usado
+
+        // Array de pinturas con sus datos y porcentajes de colores objetivo
+        const paintings = [
+            {
+                name: "La Noche Estrellada",
+                artist: "Vincent van Gogh",
+                imageUrl: "https://placehold.co/400x300/2A3C5A/FACC15?text=La+Noche+Estrellada", // [Image of The Starry Night]
+                // Porcentajes objetivo de colores (suma debe ser 100)
+                targetColorPercentages: {
+                    '#3B82F6': 60, // Azul
+                    '#FACC15': 30, // Amarillo
+                    '#EF4444': 5,  // Rojo
+                    '#22C55E': 0,  // Verde
+                    '#A855F7': 5   // Morado
+                }
+            },
+            {
+                name: "Impresión, sol naciente",
+                artist: "Claude Monet",
+                imageUrl: "https://placehold.co/400x300/FF8C00/3B82F6?text=Impresion+Sol+Naciente", // [Image of Impression, Sunrise]
+                targetColorPercentages: {
+                    '#EF4444': 40, // Rojo (para el naranja/cálido)
+                    '#3B82F6': 40, // Azul
+                    '#FACC15': 10, // Amarillo
+                    '#22C55E': 5,  // Verde
+                    '#A855F7': 5   // Morado
+                }
+            },
+            {
+                name: "Las Dos Fridas",
+                artist: "Frida Kahlo",
+                imageUrl: "https://placehold.co/400x300/22C55E/EF4444?text=Las+Dos+Fridas", // [Image of The Two Fridas]
+                targetColorPercentages: {
+                    '#22C55E': 50, // Verde
+                    '#EF4444': 40, // Rojo
+                    '#3B82F6': 5,  // Azul
+                    '#FACC15': 5,  // Amarillo
+                    '#A855F7': 0   // Morado
+                }
+            }
+        ];
+
+        // Inicializar los contadores de color
+        function initializeColorCounts() {
+            paintings[0].targetColorPercentages && Object.keys(paintings[0].targetColorPercentages).forEach(color => {
+                colorCounts[color] = 0;
+            });
+        }
+        initializeColorCounts();
+
+        // Función para establecer el tamaño del canvas dinámicamente
+        function setCanvasSize() {
+            // Ajusta el tamaño del canvas a su tamaño CSS real
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            // Configuración del contexto de dibujo
+            ctx.lineJoin = 'round'; // Uniones de línea redondeadas
+            ctx.lineCap = 'round'; // Extremos de línea redondeados
+            ctx.lineWidth = 5; // Grosor de la línea
+        }
+
+        // Event listeners para ajustar el tamaño del canvas al cargar y al redimensionar la ventana
+        window.addEventListener('load', setCanvasSize);
+        window.addEventListener('resize', setCanvasSize);
+
+        // Función para dibujar en el canvas
+        function draw(e) {
+            if (!isDrawing) return; // Si no se está dibujando, salir
+
+            ctx.beginPath(); // Iniciar un nuevo trazado
+            ctx.moveTo(lastX, lastY); // Mover al último punto
+            ctx.lineTo(e.offsetX, e.offsetY); // Dibujar una línea al punto actual
+            ctx.strokeStyle = currentColor; // Establecer el color del trazo
+            ctx.stroke(); // Dibujar el trazo
+
+            // Actualizar las últimas coordenadas
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+            // Incrementar el contador del color actual
+            if (colorCounts[currentColor] !== undefined) {
+                colorCounts[currentColor]++;
+            } else {
+                colorCounts[currentColor] = 1;
+            }
+        }
+
+        // Función para iniciar el dibujo
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY]; // Establecer el punto de inicio del dibujo
+        }
+
+        // Función para detener el dibujo
+        function stopDrawing() {
+            isDrawing = false;
+            displayPaintingBasedOnColors(); // Llamar a la función para mostrar la pintura al detener el dibujo
+        }
+
+        // Event listeners para el dibujo con el ratón
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing); // Detener el dibujo si el ratón sale del canvas
+
+        // Event listeners para el dibujo táctil (para dispositivos móviles)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevenir el desplazamiento de la página
+            const touch = e.touches[0]; // Obtener el primer toque
+            // Calcular las coordenadas relativas al canvas
+            startDrawing({ offsetX: touch.clientX - canvas.getBoundingClientRect().left, offsetY: touch.clientY - canvas.getBoundingClientRect().top });
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevenir el desplazamiento de la página
+            const touch = e.touches[0];
+            // Calcular las coordenadas relativas al canvas
+            draw({ offsetX: touch.clientX - canvas.getBoundingClientRect().left, offsetY: touch.clientY - canvas.getBoundingClientRect().top });
+        });
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing);
+
+        // Selección de color de la paleta
+        colorPalette.addEventListener('click', (e) => {
+            if (e.target.classList.contains('color-button')) {
+                // Quitar la clase 'selected' de todos los botones de color
+                document.querySelectorAll('.color-button').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                // Añadir la clase 'selected' al botón clicado
+                e.target.classList.add('selected');
+                currentColor = e.target.dataset.color; // Actualizar el color actual
+                ctx.strokeStyle = currentColor; // Actualizar el color del trazo del contexto inmediatamente
+            }
+        });
+
+        // Inicializar el primer color como seleccionado al cargar la página
+        document.querySelector('.color-button').classList.add('selected');
+
+        // Funcionalidad del botón "Limpiar Canvas"
+        clearButton.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar todo el canvas
+            initializeColorCounts(); // Reiniciar los contadores de color
+            // Restablecer la imagen y el texto de información
+            paintingImage.src = "https://placehold.co/400x300/e0e0e0/555555?text=Pinta+para+ver+arte";
+            paintingInfo.textContent = "Pinta en el canvas para descubrir una obra de arte.";
+        });
+
+        // Función para mostrar la pintura basada en los colores utilizados
+        function displayPaintingBasedOnColors() {
+            let totalPixelsDrawn = 0;
+            for (const color in colorCounts) {
+                totalPixelsDrawn += colorCounts[color];
+            }
+
+            // Si no se ha usado ningún color, mostrar el mensaje por defecto
+            if (totalPixelsDrawn === 0) {
+                paintingImage.src = "https://placehold.co/400x300/e0e0e0/555555?text=Pinta+para+ver+arte";
+                paintingInfo.textContent = "Pinta en el canvas para descubrir una obra de arte.";
+                return;
+            }
+
+            // Calcular los porcentajes de colores dibujados
+            const drawnColorPercentages = {};
+            for (const color in colorCounts) {
+                drawnColorPercentages[color] = (colorCounts[color] / totalPixelsDrawn) * 100;
+            }
+
+            let bestMatchPainting = null;
+            let minDifference = Infinity;
+
+            // Iterar sobre cada pintura para encontrar la mejor coincidencia
+            paintings.forEach(painting => {
+                let currentDifference = 0;
+                // Calcular la diferencia absoluta entre los porcentajes dibujados y los objetivos de la pintura
+                for (const color in painting.targetColorPercentages) {
+                    const targetPercentage = painting.targetColorPercentages[color] || 0;
+                    const drawnPercentage = drawnColorPercentages[color] || 0;
+                    currentDifference += Math.abs(drawnPercentage - targetPercentage);
+                }
+
+                // Si esta pintura tiene una diferencia menor, es la mejor coincidencia hasta ahora
+                if (currentDifference < minDifference) {
+                    minDifference = currentDifference;
+                    bestMatchPainting = painting;
+                }
+            });
+
+            // Mostrar la pintura que mejor coincide
+            if (bestMatchPainting) {
+                paintingImage.src = bestMatchPainting.imageUrl;
+                // Manejo de error si la imagen no carga
+                paintingImage.onerror = () => {
+                    paintingImage.src = "https://placehold.co/400x300/e0e0e0/555555?text=Error+al+cargar+imagen";
+                };
+                paintingInfo.textContent = `${bestMatchPainting.name} por ${bestMatchPainting.artist}`;
+            } else {
+                // Si no se encuentra una coincidencia clara
+                paintingImage.src = "https://placehold.co/400x300/e0e0e0/555555?text=Sigue+pintando+para+inspirarte";
+                paintingInfo.textContent = "No hemos encontrado una obra que coincida perfectamente. ¡Sigue pintando!";
+            }
+        }
+    </script>
+</body>
+</html>
