@@ -117,7 +117,7 @@
     <footer class="bg-orange-700 text-white p-6 mt-8 rounded-t-lg">
         <div class="container mx-auto text-center">
             <p>&copy; 2025 Blanca Cerveró Beltrán</p>
-            <p class="text-sm mt-2">Integración de la aplicación de pintura con predominancia de colores.</p>
+            <p class="text-sm mt-2"></p>
         </div>
     </footer>
 
@@ -140,9 +140,9 @@
         // Array de pinturas con sus datos y porcentajes de colores objetivo
         const paintings = [
             {
-                name: "La Noche Estrellada",
-                artist: "Vincent van Gogh",
-                imageUrl: "https://placehold.co/400x300/2A3C5A/FACC15?text=La+Noche+Estrellada", // [Image of The Starry Night]
+                name: "Sorolla como Pretexto",
+                artist: "Equipo Crónica",
+                imageUrl: "./assets/Sorolla_como_pretexto_ Equipo_Crónica.jpg", // [Image of The Starry Night]
                 // Porcentajes objetivo de colores (suma debe ser 100)
                 targetColorPercentages: {
                     '#3B82F6': 60, // Azul
@@ -152,6 +152,72 @@
                     '#A855F7': 5   // Morado
                 }
             },
+             {
+                name: "Figura Imposible",
+                artist: "Jose María Yturralde",
+                imageUrl: "./assets/Figura_imposible_José María_Yturralde.jpg", // [Image of The Starry Night]
+                // Porcentajes objetivo de colores (suma debe ser 100)
+                targetColorPercentages: {
+                    '#3B82F6': 20, // Azul
+                    '#FACC15': 5, // Amarillo
+                    '#EF4444': 0,  // Rojo
+                    '#22C55E': 70,  // Verde
+                    '#A855F7': 5   // Morado
+                }
+            },
+            {
+                name: "Torii III",
+                artist: "Nico Munuera",
+                imageUrl: "./assets/Torii_III_Nico_Munuera.jpg", // [Image of The Starry Night]
+                // Porcentajes objetivo de colores (suma debe ser 100)
+                targetColorPercentages: {
+                    '#3B82F6': 20, // Azul
+                    '#FACC15': 0, // Amarillo
+                    '#EF4444': 70,  // Rojo
+                    '#22C55E': 0,  // Verde
+                    '#A855F7': 10   // Morado
+                }
+            },
+            {
+                name: "La casa de Scully",
+                artist: "Francisco Solana",
+                imageUrl: "./assets/La_casa_de_Scully_ Franciasco_Solana.jpg", // [Image of The Starry Night]
+                // Porcentajes objetivo de colores (suma debe ser 100)
+                targetColorPercentages: {
+                    '#3B82F6': 30, // Azul
+                    '#FACC15': 10, // Amarillo
+                    '#EF4444': 20,  // Rojo
+                    '#22C55E': 30,  // Verde
+                    '#A855F7': 20   // Morado
+                }
+            },
+             {
+                name: "Morado",
+                artist: "Ana Peters",
+                imageUrl: "./assets/Morado_ Ana_Peters.jpg", // [Image of The Starry Night]
+                // Porcentajes objetivo de colores (suma debe ser 100)
+                targetColorPercentages: {
+                    '#3B82F6': 5, // Azul
+                    '#FACC15': 0, // Amarillo
+                    '#EF4444': 0,  // Rojo
+                    '#22C55E': 0,  // Verde
+                    '#A855F7': 85   // Morado
+                }
+            },
+            {
+                name: "Sin título",
+                artist: "Vicente Rodes",
+                imageUrl: "./assets/Sin_título_Vicente_Rodes.jpg", // [Image of The Starry Night]
+                // Porcentajes objetivo de colores (suma debe ser 100)
+                targetColorPercentages: {
+                    '#3B82F6': 10, // Azul
+                    '#FACC15': 70, // Amarillo
+                    '#EF4444': 0,  // Rojo
+                    '#22C55E': 20,  // Verde
+                    '#A855F7': 0   // Morado
+                }
+            },
+          /*
             {
                 name: "Impresión, sol naciente",
                 artist: "Claude Monet",
@@ -175,7 +241,7 @@
                     '#FACC15': 5,  // Amarillo
                     '#A855F7': 0   // Morado
                 }
-            }
+            }*/
         ];
 
         // Inicializar los contadores de color
