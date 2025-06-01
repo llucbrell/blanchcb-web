@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería Interactiva de Estilos de Arte - IVAM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Un gris muy claro, casi blanco */
+        }
+        .container {
+            max-width: 960px;
+        }
+        .button-style {
+            /* Estilo base de los botones */
+            @apply bg-orange-600 text-white font-bold py-2 px-4 rounded-md shadow-md hover:bg-orange-700 transition duration-300 ease-in-out transform hover:scale-105;
+        }
+        .button-active-style {
+            /* Estilo para el botón activo/seleccionado */
+            @apply bg-orange-800 ring-2 ring-orange-400; /* Fondo más oscuro y un anillo para resaltarlo */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-orange-700 text-white p-6 shadow-lg rounded-b-lg">
+        <div class="container mx-auto flex justify-center items-center">
+            <h1 class="text-3xl font-bold text-center">Explora Estilos de Arte en el IVAM</h1>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-6 my-8 bg-white rounded-lg shadow-xl">
+        <section id="artgallery" class="mb-8">
+            <h2 class="text-2xl font-semibold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2">Descubre Obras por Estilo Artístico</h2>
+            <p class="text-gray-700 mb-6">
+                Haz clic en los botones para visualizar ejemplos de obras que representan diferentes estilos de arte, 
+                como si estuvieras explorando la colección del IVAM.
+            </p>
+
+            <div class="p-4 bg-orange-50 rounded-md shadow-sm mb-8">
+                <h3 class="text-xl font-semibold text-orange-700 mb-4">Elige un Estilo:</h3>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button class="button-style" data-style="Original">Original</button>
+                    <button class="button-style" data-style="Impresionismo">Impresionismo</button>
+                    <button class="button-style" data-style="Post Impresionismo">Post Impresionismo</button>
+                    <button class="button-style" data-style="Ilust">I</button>
+                    <button class="button-style" data-style="Bauhaus">Bauhaus</button>
+                    <button class="button-style" data-style="Pop Art">Pop Art</button>
+                    <button class="button-style" data-style="Anime">Anime</button>
+                    <button class="button-style" data-style="Art Nouveau">Art Nouveau</button>
+                    <button class="button-style" data-style="Realismo">Realismo</button>
+                    <button class="button-style" data-style="Retro">Retro</button>
+                </div>
+            </div>
+
+            <div class="mb-8 p-4 bg-orange-50 rounded-md shadow-sm text-center">
+                <h3 class="text-xl font-semibold text-orange-700 mb-4" id="imageTitle">Imagen de Arte</h3>
+                <img id="artImage" src="https://placehold.co/800x450/f97316/ffffff?text=Haz+clic+en+un+estilo" alt="Imagen de arte" class="w-full md:w-1/2 lg:w-2/5 h-auto rounded-lg shadow-md mb-4 mx-auto">
+                <p class="text-gray-600 text-sm" id="imageDescription">
+                    Selecciona un estilo artístico de los botones de arriba para ver una imagen representativa.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-orange-700 text-white p-6 mt-8 rounded-t-lg">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Blanca Cerveró Beltrán</p>
+            <p class="text-sm mt-2">Diseñado con Tailwind CSS.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Define un objeto con los estilos de arte y sus URLs de imagen correspondientes
+        const artStyles = {
+            "Original": {
+                src: "./assets/blanca_original.jpg",
+                alt: "Foto Original",
+                description: "Esta es la imagen original sin aplicar ningún estilo artístico."
+            },
+            "Impresionismo": {
+                src: "./assets/blanca_impr.jpg",
+                alt: "Obra de estilo Impresionista",
+                description: "El Impresionismo, caracterizado por sus pinceladas sueltas y el enfoque en la luz y el color."
+            },
+            "Post Impresionismo": {
+                src: "./assets/blanca_gogh.jpg",
+                alt: "Obra de estilo Post Impresionista",
+                description: "El Post Impresionismo, que se desarrolló a partir del Impresionismo, buscando una expresión más personal y simbólica."
+            },
+            "Ilust": {
+                src: "./assets/blanca_ilust.jpg",
+                alt: "Obra de estilo ",
+                description: "El Renacimiento,"
+            },
+            "Bauhaus": {
+                src: "./assets/blanca_pop.jpg",
+                alt: "Obra de estilo Bauhaus",
+                description: "El Bauhaus, caracterizado por la funcionalidad, simplicidad uso de formas geométricas y colores primarios."
+            },
+            "Pop Art": {
+                src: "./assets/blanca_warhol.jpg",
+                alt: "Obra de estilo Pop Art",
+                description: "El Pop Art, que utiliza imágenes de la cultura popular y el consumo masivo."
+            },
+            "Anime": {
+                src: "./assets/blanca_anime.jpg",
+                alt: "Obra de estilo Abstracto",
+                description: "El Anime es un movimiento pictórico popular originario de Japón."
+            },
+            "Realismo": {
+                src: "./assets/blanca_acuarel.jpg",
+                alt: "Obra de estilo Realista",
+                description: "El Realismo, que busca representar la realidad de forma objetiva y detallada."
+            },
+            "Art Nouveau": {
+                src: "./assets/blanca_clasic.jpg",
+                alt: "Obra de estilo Art Nouveau",
+                description: "El Art Nouvea, es un movimietno originario francés del periodo XIX, XX"
+            },
+            "Retro": {
+                src: "./assets/blanca_retro.jpg",
+                alt: "Obra de estilo Retro",
+                description: "El estilo Retro es un estilo que recupera impresiones de la pintura de la época clásica"
+            }
+        };
+
+        // Función para cambiar la imagen y la descripción, y actualizar el estado activo del botón
+        function changeArtStyle(styleName, clickedButton = null) {
+            const artImage = document.getElementById('artImage');
+            const imageTitle = document.getElementById('imageTitle');
+            const imageDescription = document.getElementById('imageDescription');
+            const styleData = artStyles[styleName];
+
+            // Eliminar la clase 'button-active-style' de todos los botones
+            const buttons = document.querySelectorAll('.button-style');
+            buttons.forEach(button => {
+                button.classList.remove('button-active-style');
+            });
+
+            // Añadir la clase 'button-active-style' al botón que fue clicado
+            if (clickedButton) {
+                clickedButton.classList.add('button-active-style');
+            } else {
+                // Si se llama sin un botón (ej. carga inicial), encontrar el botón por su data-style
+                const initialButton = document.querySelector(`button[data-style="${styleName}"]`);
+                if (initialButton) {
+                    initialButton.classList.add('button-active-style');
+                }
+            }
+
+            if (styleData) {
+                artImage.src = styleData.src;
+                artImage.alt = styleData.alt;
+                imageTitle.textContent = `Estilo: ${styleName}`;
+                imageDescription.textContent = styleData.description;
+            } else {
+                // Fallback si el estilo no se encuentra
+                artImage.src = "https://placehold.co/800x450/f97316/ffffff?text=Estilo+no+encontrado";
+                artImage.alt = "Estilo no encontrado";
+                imageTitle.textContent = "Estilo no encontrado";
+                imageDescription.textContent = "Lo sentimos, no hay información para este estilo.";
+            }
+        }
+
+        // Añadir event listeners a los botones cuando el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.button-style');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const style = button.getAttribute('data-style');
+                    changeArtStyle(style, button); // Pasar el elemento del botón clicado
+                });
+            });
+
+            // Establecer la imagen inicial y el botón activo al cargar la página (por ejemplo, "Original")
+            changeArtStyle("Original");
+        });
+    </script>
+</body>
+</html>
