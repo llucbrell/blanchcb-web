@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiencia Dalí 3D - Cuadro Abstracto Interactivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Importar la librería Three.js desde la URL que sabes que funciona -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- ¡IMPORTANTE! Eliminamos la carga de OrbitControls como has solicitado -->
+    <style>
+        /* Estilos generales del cuerpo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Un gris muy claro, casi blanco */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow-x: hidden; /* Evitar scroll horizontal */
+        }
+        /* Contenedor principal para el contenido */
+        .container {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Estilos para el canvas 3D */
+        #threeJsCanvas {
+            border: 2px solid #e0e0e0; /* Borde gris claro */
+            border-radius: 0.75rem; /* Bordes redondeados */
+            background-color: #ffffff; /* Fondo blanco */
+            width: 100%; /* Asegura que el canvas ocupe todo el ancho disponible */
+            min-height: 400px; /* Altura mínima para el canvas 3D */
+            touch-action: none; /* Evita el desplazamiento de la página al interactuar con el 3D */
+            display: block; /* Asegurarse de que no haya margen inferior por defecto */
+        }
+        /* Estilos para el mensaje de carga (oculto en esta versión simplificada) */
+        #loadingMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            z-index: 10;
+            display: none; /* Oculto por defecto ya que la carga es rápida */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-orange-700 text-white p-6 shadow-lg rounded-b-lg">
+        <div class="container mx-auto flex justify-center items-center">
+            <h1 class="text-3xl font-bold text-center">Experiencia Dalí 3D: Cuadro Abstracto Interactivo</h1>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-6 my-8 bg-white rounded-lg shadow-xl relative">
+        <section id="abstract-3d-section" class="mb-8">
+            <h2 class="text-2xl font-semibold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2">¡Sumérgete en el arte abstracto tridimensional!</h2>
+            <p class="text-gray-700 mb-6">
+                Explora un entorno 3D abstracto generado con formas geométricas básicas directamente en tu navegador. Esta experiencia es ligera y no requiere cargas adicionales. Usa el ratón o el dedo para girar la cámara y mirar a tu alrededor, ¡como si estuvieras dentro de un cuadro!
+            </p>
+
+            <div class="relative flex justify-center items-center bg-gray-100 rounded-lg shadow-md overflow-hidden">
+                <canvas id="threeJsCanvas" class="w-full"></canvas>
+                <!-- Mensaje de carga -->
+                <div id="loadingMessage">Cargando experiencia 3D...</div>
+            </div>
+
+            <div class="mt-6 text-center text-gray-600 text-sm">
+                <p>Consejo: Haz clic y arrastra para rotar la vista.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-orange-700 text-white p-6 mt-8 rounded-t-lg">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Blanca Cerveró Beltrán</p>
+            <p class="text-sm mt-2"></p>
+        </div>
+    </footer>
+
+    <script>
+        // Variables globales para la escena Three.js
+        let scene, camera, renderer;
+        const objects = []; // Array para almacenar los objetos 3D
+
+        // Variables para el control manual de la cámara
+        let isDragging = false;
+        let previousMouseX = 0;
+        let previousMouseY = 0;
+        const rotationSpeed = 0.005; // Velocidad de rotación de la cámara
+
+        // Obtener elementos del DOM
+        const threeJsCanvas = document.getElementById('threeJsCanvas');
+        const loadingMessage = document.getElementById('loadingMessage'); // Aunque no se usa en este script, se mantiene el ID.
+
+        // Función de inicialización de la escena 3D
+        function initScene() {
+            loadingMessage.classList.remove('hidden'); // Mostrar mensaje de carga al inicio
+
+            // 1. Escena: Contenedor principal para todos los objetos 3D, luces y cámaras
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xeeeeee); // Fondo gris claro
+
+            // 2. Cámara: Define el punto de vista del espectador
+            camera = new THREE.PerspectiveCamera(
+                75,
+                threeJsCanvas.offsetWidth / threeJsCanvas.offsetHeight,
+                0.1,
+                1000
+            );
+            camera.position.z = 5; // Posición inicial de la cámara en el eje Z
+
+            // 3. Renderizador: Se encarga de dibujar la escena en el canvas HTML
+            renderer = new THREE.WebGLRenderer({ canvas: threeJsCanvas, antialias: true });
+            renderer.setSize(threeJsCanvas.offsetWidth, threeJsCanvas.offsetHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // 4. Luces: Necesarias para que los objetos sean visibles en 3D
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(0, 1, 1).normalize();
+            scene.add(directionalLight);
+
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambientLight);
+
+            // 5. Crear formas geométricas para el cuadro abstracto
+            createAbstractArt();
+
+            // 6. Configurar eventos para el movimiento manual de la cámara
+            threeJsCanvas.addEventListener('mousedown', onMouseDown);
+            threeJsCanvas.addEventListener('mouseup', onMouseUp);
+            threeJsCanvas.addEventListener('mousemove', onMouseMove);
+
+            threeJsCanvas.addEventListener('touchstart', onTouchStart, { passive: false });
+            threeJsCanvas.addEventListener('touchend', onTouchEnd);
+            threeJsCanvas.addEventListener('touchmove', onTouchMove, { passive: false });
+
+            // 7. Manejar el redimensionamiento de la ventana
+            window.addEventListener('resize', onWindowResize, false);
+
+            loadingMessage.classList.add('hidden'); // Ocultar mensaje de carga una vez inicializado
+        }
+
+        // Funciones de manejo de eventos para el ratón
+        function onMouseDown(event) {
+            isDragging = true;
+            previousMouseX = event.clientX;
+            previousMouseY = event.clientY;
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+        }
+
+        function onMouseMove(event) {
+            if (!isDragging) return;
+
+            const deltaX = event.clientX - previousMouseX;
+            const deltaY = event.clientY - previousMouseY;
+
+            // Rotar la cámara alrededor de su eje Y (yaw) y X (pitch)
+            camera.rotation.y += deltaX * rotationSpeed;
+            camera.rotation.x += deltaY * rotationSpeed;
+
+            // Limitar la rotación en X para evitar "volteretas"
+            camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+
+            previousMouseX = event.clientX;
+            previousMouseY = event.clientY;
+        }
+
+        // Funciones de manejo de eventos para el toque (touch)
+        let previousTouchX = 0;
+        let previousTouchY = 0;
+
+        function onTouchStart(event) {
+            event.preventDefault(); // Prevenir el desplazamiento de la página
+            isDragging = true;
+            previousTouchX = event.touches[0].clientX;
+            previousTouchY = event.touches[0].clientY;
+        }
+
+        function onTouchEnd() {
+            isDragging = false;
+        }
+
+        function onTouchMove(event) {
+            event.preventDefault(); // Prevenir el desplazamiento de la página
+            if (!isDragging) return;
+
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - previousTouchX;
+            const deltaY = touch.clientY - previousTouchY;
+
+            camera.rotation.y += deltaX * rotationSpeed;
+            camera.rotation.x += deltaY * rotationSpeed;
+
+            camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+
+            previousTouchX = touch.clientX;
+            previousTouchY = touch.clientY;
+        }
+
+        // Función para crear las formas abstractas (solo cuboides, no rotan, sin fondo programático)
+        function createAbstractArt() {
+            // Definición de materiales con colores básicos
+            const colors = [0xEF4444, 0x3B82F6, 0x22C55E, 0xFACC15, 0xA855F7, 0x8B5CF6, 0xEC4899]; // Colores para los cubos
+
+            const materials = colors.map(color => new THREE.MeshPhongMaterial({ color: color, flatShading: true, side: THREE.DoubleSide }));
+
+            // Cuboides iniciales (aproximadamente 10)
+            // Puedes ajustar las posiciones (x, y, z), dimensiones (ancho, alto, profundidad) y materiales a tu gusto
+            // Formato: addCuboid(x, y, z, width, height, depth, materialIndex)
+            function addCuboid(x, y, z, w, h, d, materialIndex) {
+                const geometry = new THREE.BoxGeometry(w, h, d);
+                const material = materials[materialIndex % materials.length]; // Asegura que el índice sea válido
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(x, y, z);
+                scene.add(mesh);
+                objects.push(mesh); // Añadir a la lista para referencia, aunque no rotarán automáticamente
+            }
+
+            // Ejemplos de 10 cuboides fijos
+            addCuboid(0, 0, 0, 1, 1, 1, 0); // Rojo en el centro
+            addCuboid(2, 1, -1, 1.5, 0.8, 0.5, 1); // Azul, más ancho
+            addCuboid(-2.5, -1, 0.5, 0.7, 2, 0.7, 2); // Verde, más alto
+            addCuboid(1, -2, 2, 1, 1, 3, 3); // Amarillo, más profundo
+            addCuboid(-3, 2, -2, 2, 0.5, 1, 4); // Morado, más plano
+            addCuboid(0.5, 3, -0.5, 0.5, 0.5, 0.5, 5); // Pequeño morado oscuro
+            addCuboid(-1.5, -3, -1.5, 1.2, 1.2, 1.2, 6); // Rosa, tamaño medio
+            addCuboid(3.5, -0.5, -0.8, 0.6, 2.5, 0.6, 0); // Rojo, alto y delgado
+            addCuboid(-0.8, 0.8, 3, 2, 0.4, 0.4, 1); // Azul, plano y ancho en Z
+            addCuboid(0, -1, -3, 1, 1, 0.2, 2); // Verde, como una pared fina
+
+            // Puedes añadir más cuboides aquí siguiendo el mismo patrón
+            // addCuboid(x, y, z, width, height, depth, materialIndex);
+        }
+
+        // Función de animación: Este es el bucle principal de renderizado
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // NO ROTAR LOS OBJETOS. La rotación de los objetos ha sido eliminada
+            // objects.forEach((obj) => {
+            //     obj.rotation.x += 0.005;
+            //     obj.rotation.y += 0.005;
+            // });
+
+            // Renderizar la escena desde la perspectiva de la cámara
+            renderer.render(scene, camera);
+        }
+
+        // Función para ajustar el tamaño del canvas y la cámara cuando la ventana se redimensiona
+        function onWindowResize() {
+            camera.aspect = threeJsCanvas.offsetWidth / threeJsCanvas.offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(threeJsCanvas.offsetWidth, threeJsCanvas.offsetHeight);
+        }
+
+        // Se llama a la función de inicialización y animación cuando el DOM esté listo
+        initScene();
+        animate();
+    </script>
+</body>
+</html>
