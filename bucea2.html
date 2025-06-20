@@ -1,351 +1,42 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experiencia Dalí 3D - Taller de Artista y Caballete</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Importar la librería Three.js -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<html>
+  <head>
+    <title>AR con imagen sobre marcador Hiro</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
     <style>
-        /* Estilos generales del cuerpo */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Un gris muy claro, casi blanco */
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            overflow-x: hidden; /* Evitar scroll horizontal */
-        }
-        /* Contenedor principal para el contenido */
-        .container {
-            max-width: 960px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        /* Estilos para el canvas 3D */
-        #threeJsCanvas {
-            border: 2px solid #e0e0e0; /* Borde gris claro */
-            border-radius: 0.75rem; /* Bordes redondeados */
-            background-color: #ffffff; /* Fondo blanco */
-            width: 100%; /* Asegura que el canvas ocupe todo el ancho disponible */
-            min-height: 400px; /* Altura mínima para el canvas 3D */
-            touch-action: none; /* Evita el desplazamiento de la página al interactuar con el 3D */
-            display: block; /* Asegurarse de que no haya margen inferior por defecto */
-            cursor: grab; /* Cursor para indicar que se puede arrastrar */
-        }
-        #threeJsCanvas.grabbing {
-            cursor: grabbing; /* Cursor cuando se está arrastrando */
-        }
-        /* Estilos para el mensaje de carga (oculto en esta versión simplificada) */
-        #loadingMessage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 0.5rem;
-            z-index: 10;
-            display: none; /* Oculto por defecto ya que la carga es rápida */
-        }
+      body, html { margin: 0; padding: 0; overflow: hidden; }
     </style>
-</head>
-<body class="flex flex-col min-h-screen">
-    <header class="bg-orange-700 text-white p-6 shadow-lg rounded-b-lg">
-        <div class="container mx-auto flex justify-center items-center">
-            <h1 class="text-3xl font-bold text-center">Taller del Artista</h1>
-        </div>
-    </header>
+  </head>
+  <body>
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false;"
+    >
+      <!-- Marcador Hiro -->
+      <a-marker preset="hiro">
+        <!-- Imagen en RA -->
+        <a-image
+          src="./assets/Figura imposible_ José María Yturralde.jpg"
+          position="0 0.5 0"
+          rotation="-90 0 0"
+          width="1"
+          height="0.75"
+        ></a-image>
+          <!-- Texto encima de la imagen -->
+        <a-text
+          value="Figura Imposible de José María Yturralde"
+          position="0 1 0"
+          rotation="-90 0 0"
+          align="center"
+          color="white"
+          width="2"
+        ></a-text>
+      </a-marker>
 
-    <main class="flex-grow container mx-auto p-6 my-8 bg-white rounded-lg shadow-xl relative">
-        <section id="abstract-3d-section" class="mb-8">
-            <h2 class="text-2xl font-semibold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2">¡El estudio de Blanca Cerveró!</h2>
-            <p class="text-gray-700 mb-6">
-                Estás en un taller de artista con un caballete en el centro.
-                Utiliza el ratón o el dedo para girar la vista y explorar el estudio.
-            </p>
-
-            <div class="relative flex justify-center items-center bg-gray-100 rounded-lg shadow-md overflow-hidden">
-                <canvas id="threeJsCanvas" class="w-full"></canvas>
-                <!-- Mensaje de carga -->
-                <div id="loadingMessage">Cargando experiencia 3D...</div>
-            </div>
-
-            <div class="mt-6 text-center text-gray-600 text-sm">
-                <p>Consejo: Haz clic y arrastra para rotar la escena y mirar a tu alrededor.</p>
-            </div>
-        </section>
-    </main>
-
-    <footer class="bg-orange-700 text-white p-6 mt-8 rounded-t-lg">
-        <div class="container mx-auto text-center">
-            <p>&copy; 2025 Blanca Cerveró Beltrán</p>
-            <p class="text-sm mt-2"></p>
-        </div>
-    </footer>
-
-    <script>
-        // Variables globales para la escena Three.js
-        let scene, camera, renderer;
-
-        // Variables para el control manual de la rotación de la CÁMARA
-        let isDragging = false;
-        let previousMouseX = 0;
-        let previousMouseY = 0;
-        const rotationSpeed = 0.005; // Velocidad de rotación de la cámara
-
-        // Variables para la posición esférica de la cámara
-        let cameraRadius;
-        let cameraTheta; // Ángulo horizontal (alrededor del eje Y)
-        let cameraPhi;   // Ángulo vertical (desde el polo superior, alrededor del eje X)
-        const cameraTarget = new THREE.Vector3(0, 0, 0); // Punto al que la cámara siempre mira
-
-        // Obtener elementos del DOM
-        const threeJsCanvas = document.getElementById('threeJsCanvas');
-        const loadingMessage = document.getElementById('loadingMessage');
-
-        // Función de inicialización de la escena 3D
-        function initScene() {
-            loadingMessage.classList.remove('hidden'); // Mostrar mensaje de carga al inicio
-
-            // 1. Escena: Contenedor principal para todos los objetos 3D, luces y cámaras
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xeeeeee); // Fondo gris claro
-
-            // 2. Cámara: Se usa OrthographicCamera para la vista isométrica
-            const aspect = threeJsCanvas.offsetWidth / threeJsCanvas.offsetHeight;
-            const size = 6; // Determina el "zoom" o el área visible en la vista isométrica
-            camera = new THREE.OrthographicCamera(
-                -size * aspect, size * aspect,
-                size, -size,
-                0.1, 1000
-            );
-
-            // Posición inicial de la cámara para una vista isométrica del taller
-            // Esta posición se usará para calcular los ángulos iniciales (theta, phi)
-            camera.position.set(size * 1.5, size * 1.2, size * 1.5); // Ajustado para ver el taller
-            camera.lookAt(cameraTarget); // La cámara mira al origen del escenario
-
-            // Inicializar las coordenadas esféricas de la cámara
-            cameraRadius = camera.position.length(); // Distancia desde el origen
-            cameraTheta = Math.atan2(camera.position.x, camera.position.z); // Ángulo en el plano XZ
-            cameraPhi = Math.acos(camera.position.y / cameraRadius); // Ángulo desde el eje Y (vertical)
-
-            // 3. Renderizador: Se encarga de dibujar la escena en el canvas HTML
-            renderer = new THREE.WebGLRenderer({ canvas: threeJsCanvas, antialias: true });
-            renderer.setSize(threeJsCanvas.offsetWidth, threeJsCanvas.offsetHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-
-            // 4. Luces: Necesarias para que los objetos sean visibles en 3D
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(5, 10, 7.5).normalize(); // Una luz desde arriba y un lado
-            scene.add(directionalLight);
-
-            const ambientLight = new THREE.AmbientLight(0x404040, 2); // Luz ambiental suave
-            scene.add(ambientLight);
-
-            // 5. Crear el entorno del taller y el caballete
-            createStudioEnvironment();
-
-            // 6. Configurar eventos para la rotación de la CÁMARA
-            threeJsCanvas.addEventListener('mousedown', onMouseDown);
-            threeJsCanvas.addEventListener('mouseup', onMouseUp);
-            threeJsCanvas.addEventListener('mousemove', onMouseMove);
-            threeJsCanvas.addEventListener('mouseleave', onMouseUp); // Asegurar que isDragging se desactiva si el ratón sale del canvas
-
-            threeJsCanvas.addEventListener('touchstart', onTouchStart, { passive: false });
-            threeJsCanvas.addEventListener('touchend', onTouchEnd);
-            threeJsCanvas.addEventListener('touchmove', onTouchMove, { passive: false });
-            threeJsCanvas.addEventListener('touchcancel', onTouchEnd);
-
-            // 7. Manejar el redimensionamiento de la ventana
-            window.addEventListener('resize', onWindowResize, false);
-
-            loadingMessage.classList.add('hidden'); // Ocultar mensaje de carga una vez inicializado
-        }
-
-        // Funciones de manejo de eventos para el ratón
-        function onMouseDown(event) {
-            isDragging = true;
-            previousMouseX = event.clientX;
-            previousMouseY = event.clientY;
-            threeJsCanvas.classList.add('grabbing'); // Cambiar cursor
-        }
-
-        function onMouseUp() {
-            isDragging = false;
-            threeJsCanvas.classList.remove('grabbing'); // Restaurar cursor
-        }
-
-        function onMouseMove(event) {
-            if (!isDragging) return;
-
-            const deltaX = event.clientX - previousMouseX;
-            const deltaY = event.clientY - previousMouseY;
-
-            // Actualizar los ángulos theta y phi de la cámara
-            cameraTheta -= deltaX * rotationSpeed; // Rotación horizontal
-            cameraPhi += deltaY * rotationSpeed;   // Rotación vertical
-
-            // Limitar el ángulo phi para evitar que la cámara se invierta o pase los "polos"
-            // Se mantiene entre 0.1 (cerca de mirar hacia arriba) y Math.PI - 0.1 (cerca de mirar hacia abajo)
-            cameraPhi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPhi));
-
-            // Recalcular la posición de la cámara en coordenadas cartesianas
-            camera.position.x = cameraRadius * Math.sin(cameraPhi) * Math.sin(cameraTheta);
-            camera.position.y = cameraRadius * Math.cos(cameraPhi);
-            camera.position.z = cameraRadius * Math.sin(cameraPhi) * Math.cos(cameraTheta);
-
-            camera.lookAt(cameraTarget); // Asegurar que la cámara siempre mira al origen
-
-            previousMouseX = event.clientX;
-            previousMouseY = event.clientY;
-        }
-
-        // Funciones de manejo de eventos para el toque (touch)
-        let previousTouchX = 0;
-        let previousTouchY = 0;
-
-        function onTouchStart(event) {
-            event.preventDefault(); // Prevenir el desplazamiento de la página
-            isDragging = true;
-            previousTouchX = event.touches[0].clientX;
-            previousTouchY = event.touches[0].clientY;
-            threeJsCanvas.classList.add('grabbing');
-        }
-
-        function onTouchEnd() {
-            isDragging = false;
-            threeJsCanvas.classList.remove('grabbing');
-        }
-
-        function onTouchMove(event) {
-            event.preventDefault(); // Prevenir el desplazamiento de la página
-            if (!isDragging) return;
-
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - previousTouchX;
-            const deltaY = touch.clientY - previousTouchY;
-
-            // Lógica de rotación de la cámara similar a onMouseMove
-            cameraTheta -= deltaX * rotationSpeed;
-            cameraPhi += deltaY * rotationSpeed;
-
-            cameraPhi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPhi));
-
-            camera.position.x = cameraRadius * Math.sin(cameraPhi) * Math.sin(cameraTheta);
-            camera.position.y = cameraRadius * Math.cos(cameraPhi);
-            camera.position.z = cameraRadius * Math.sin(cameraPhi) * Math.cos(cameraTheta);
-
-            camera.lookAt(cameraTarget);
-
-            previousTouchX = touch.clientX;
-            previousTouchY = touch.clientY;
-        }
-
-        // Función para crear el entorno del taller y el caballete
-        function createStudioEnvironment() {
-            // Materiales para el taller (tonos neutros para el entorno)
-            const floorMaterial = new THREE.MeshPhongMaterial({ color: 0x999999, side: THREE.DoubleSide }); // Gris oscuro
-            const wallMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc, side: THREE.DoubleSide }); // Gris claro
-            const easelMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513, flatShading: true }); // Marrón siena
-
-            // Suelo del taller
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMaterial);
-            floor.rotation.x = -Math.PI / 2; // Rotar para que sea horizontal
-            floor.position.y = -2; // Posicionar bajo el área de trabajo
-            scene.add(floor);
-
-            // Pared trasera
-            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(10, 7), wallMaterial);
-            backWall.position.set(0, 1.5, -5); // Centrada, a una altura y profundidad adecuadas
-            scene.add(backWall);
-
-            // Pared lateral derecha (formando una esquina)
-            const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(10, 7), wallMaterial);
-            rightWall.rotation.y = Math.PI / 2; // Rotar 90 grados para que sea lateral
-            rightWall.position.set(5, 1.5, 0); // Posicionar a la derecha
-            scene.add(rightWall);
-
-            // Caballete (easel)
-            const legThickness = 0.1;
-            const legHeight = 3;
-            const supportBarThickness = 0.1;
-            const supportBarLength = 1.5;
-
-            // Piernas del caballete (delantera izquierda, delantera derecha, trasera)
-            const legGeometry = new THREE.BoxGeometry(legThickness, legHeight, legThickness);
-
-            const frontLeftLeg = new THREE.Mesh(legGeometry, easelMaterial);
-            frontLeftLeg.position.set(-0.6, -2 + legHeight / 2, 0.6);
-            frontLeftLeg.rotation.z = Math.PI / 16; // Ligera inclinación
-            scene.add(frontLeftLeg);
-
-            const frontRightLeg = new THREE.Mesh(legGeometry, easelMaterial);
-            frontRightLeg.position.set(0.6, -2 + legHeight / 2, 0.6);
-            frontRightLeg.rotation.z = -Math.PI / 16; // Ligera inclinación
-            scene.add(frontRightLeg);
-
-            const backLeg = new THREE.Mesh(legGeometry, easelMaterial);
-            backLeg.position.set(0, -2 + legHeight / 2, -0.2);
-            backLeg.rotation.x = Math.PI / 5; // Inclinación hacia atrás
-            scene.add(backLeg);
-
-            // Barras de soporte (horizontales/diagonales)
-            const supportBarGeometry = new THREE.BoxGeometry(supportBarLength, supportBarThickness, supportBarThickness);
-
-            const lowerSupport = new THREE.Mesh(supportBarGeometry, easelMaterial);
-            lowerSupport.position.set(0, -0.5, 0.6);
-            scene.add(lowerSupport);
-
-            const upperSupport = new THREE.Mesh(supportBarGeometry, easelMaterial);
-            upperSupport.position.set(0, 1, 0.6);
-            scene.add(upperSupport);
-
-            // Barra horizontal donde descansa el lienzo
-            const canvasRestGeometry = new THREE.BoxGeometry(2, 0.2, 0.3);
-            const canvasRest = new THREE.Mesh(canvasRestGeometry, easelMaterial);
-            canvasRest.position.set(0, 0.5, 0.5); // Ajustar altura y profundidad
-            scene.add(canvasRest);
-
-            // El "lienzo" en el caballete (un plano simple, puedes usarlo para tus cubos)
-            const canvasGeometry = new THREE.PlaneGeometry(2, 2.5);
-            const canvasMaterial = new THREE.MeshPhongMaterial({ color: 0xF5F5DC, side: THREE.DoubleSide }); // Color beige para el lienzo
-            const canvasMesh = new THREE.Mesh(canvasGeometry, canvasMaterial);
-            canvasMesh.position.set(0, 1.75, 0.4); // Posición sobre el caballete
-            scene.add(canvasMesh);
-        }
-
-        // Función de animación: Este es el bucle principal de renderizado
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-
-        // Función para ajustar el tamaño del canvas y la cámara cuando la ventana se redimensiona
-        function onWindowResize() {
-            const aspect = threeJsCanvas.offsetWidth / threeJsCanvas.offsetHeight;
-            const size = 6; // Debe coincidir con el valor usado en initScene para la cámara
-
-            // Actualizar las propiedades de la OrthographicCamera
-            camera.left = -size * aspect;
-            camera.right = size * aspect;
-            camera.top = size;
-            camera.bottom = -size;
-
-            camera.updateProjectionMatrix(); // Recalcular la matriz de proyección de la cámara
-            renderer.setSize(threeJsCanvas.offsetWidth, threeJsCanvas.offsetHeight); // Ajusta el tamaño del renderizador al nuevo tamaño del canvas
-        }
-
-        // Se llama a la función de inicialización y animación cuando el DOM esté listo
-        initScene();
-        animate();
-    </script>
-</body>
+      <!-- Cámara -->
+      <a-entity camera></a-entity>
+    </a-scene>
+  </body>
 </html>
