@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>AR Cube App</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluir three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Incluir AR.js (basado en three.js) -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script>
+    <style>
+        /* Estilos generales para centrar el contenido y asegurar que ocupe toda la pantalla */
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: "Inter", sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #333;
+        }
+        /* Estilos para el contenedor de la aplicación AR */
+        #ar-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Estilos para el mensaje de carga o instrucciones */
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            font-size: 1.1em;
+            color: #4a5568;
+            z-index: 1000;
+        }
+        .rounded-lg {
+            border-radius: 0.5rem; /* Tailwind's default rounded-lg */
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor para el mensaje de instrucciones o carga -->
+    <div id="message-box" class="rounded-lg shadow-lg">
+        <p>Asegúrate de permitir el acceso a la cámara.</p>
+        <p>Busca un marcador "Hiro" (puedes imprimirlo o mostrarlo en otra pantalla) y apúntale con la cámara para ver el cubo.</p>
+        <p class="mt-2 text-sm text-gray-600">Espera un momento mientras se inicializa la cámara...</p>
+    </div>
+
+    <!-- El componente a-scene de AR.js inicializa la escena AR -->
+    <!-- `embedded` permite que la escena se integre en la página en lugar de ocupar toda la ventana. -->
+    <!-- `arjs='sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'` configura AR.js para usar la cámara y detectar marcadores matriciales. -->
+    <a-scene embedded arjs='sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;' vr-mode-ui="enabled: false">
+        <!-- a-marker representa el marcador físico en el mundo real. -->
+        <!-- `preset='hiro'` indica que usaremos el marcador predefinido "Hiro". -->
+        <!-- Si quisieras usar tu propio marcador de imagen, usarías `type='pattern'` y `url='ruta/a/tu/marcador.patt'`. -->
+        <a-marker preset='hiro'>
+            <!-- a-box es el cubo 3D que aparecerá sobre el marcador. -->
+            <!-- `position='0 0.5 0'` lo eleva 0.5 unidades sobre el centro del marcador. -->
+            <!-- `material='color: red;'` le da un color rojo. -->
+            <!-- `rotation='0 45 45'` le da una rotación inicial. -->
+            <a-box position='0 0.5 0' material='color: red; opacity: 0.8;' rotation='0 45 45' scale="0.8 0.8 0.8">
+                <!-- Puedes añadir más elementos dentro del cubo si quieres -->
+                <a-text value="Cubo AR" color="white" align="center" position="0 0.6 0" rotation="-90 0 0" scale="0.5 0.5 0.5"></a-text>
+            </a-box>
+        </a-marker>
+
+        <!-- a-entity camera representa la cámara del usuario en la escena AR. -->
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Ocultar el mensaje de instrucciones una vez que la escena AR esté lista
+        // AR.js o A-Frame no tienen un evento directo 'ready' para la inicialización
+        // completa de la cámara, pero podemos esperar un breve período.
+        window.onload = function() {
+            setTimeout(() => {
+                const messageBox = document.getElementById('message-box');
+                if (messageBox) {
+                    messageBox.style.display = 'none';
+                }
+            }, 3000); // Dar 3 segundos para que la cámara se inicie
+        };
+
+        // Escuchar el evento 'camera-init' de a-scene si AR.js lo emite (versiones más nuevas pueden tenerlo)
+        const scene = document.querySelector('a-scene');
+        if (scene) {
+            scene.addEventListener('camera-init', function () {
+                const messageBox = document.getElementById('message-box');
+                if (messageBox) {
+                    messageBox.style.display = 'none';
+                }
+            });
+        }
+
+        // Manejo de errores para la cámara (esto es más general de WebRTC)
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                // Cámara inicializada correctamente
+                console.log('Acceso a la cámara concedido.');
+            })
+            .catch(err => {
+                // Error al acceder a la cámara
+                console.error('Error al acceder a la cámara:', err);
+                const messageBox = document.getElementById('message-box');
+                if (messageBox) {
+                    messageBox.innerHTML = `
+                        <p class="text-red-600">Error: No se pudo acceder a la cámara.</p>
+                        <p class="text-red-600">Asegúrate de haber concedido los permisos de la cámara en tu navegador.</p>
+                        <p class="mt-2 text-sm text-gray-600">Detalles: ${err.name || 'Error desconocido'}</p>
+                    `;
+                    messageBox.style.display = 'block';
+                }
+            });
+    </script>
+</body>
+</html>
