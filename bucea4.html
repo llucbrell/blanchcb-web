@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experiencia Dalí 3D - Taller de Artista y Caballete</title>
+    <title>Experiencia Dalí 3D - Cubos Rotatorios Isométricos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Importar la librería Three.js -->
@@ -59,16 +59,15 @@
 <body class="flex flex-col min-h-screen">
     <header class="bg-orange-700 text-white p-6 shadow-lg rounded-b-lg">
         <div class="container mx-auto flex justify-center items-center">
-            <h1 class="text-3xl font-bold text-center">Taller del Artista</h1>
+            <h1 class="text-3xl font-bold text-center">Experiencia Dalí 3D: Cubos Rotatorios Isométricos</h1>
         </div>
     </header>
 
     <main class="flex-grow container mx-auto p-6 my-8 bg-white rounded-lg shadow-xl relative">
         <section id="abstract-3d-section" class="mb-8">
-            <h2 class="text-2xl font-semibold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2">¡El estudio de Blanca Cerveró!</h2>
+            <h2 class="text-2xl font-semibold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2">¡Gira los cubos en vista isométrica!</h2>
             <p class="text-gray-700 mb-6">
-                Estás en un taller de artista con un caballete en el centro.
-                Utiliza el ratón o el dedo para girar la vista y explorar el estudio.
+                Explora tu figura compuesta por cubos desde una perspectiva isométrica. Las líneas paralelas se mantienen paralelas, dándote una vista clara y sin distorsión de la profundidad. Haz clic y arrastra para rotar la figura.
             </p>
 
             <div class="relative flex justify-center items-center bg-gray-100 rounded-lg shadow-md overflow-hidden">
@@ -78,7 +77,7 @@
             </div>
 
             <div class="mt-6 text-center text-gray-600 text-sm">
-                <p>Consejo: Haz clic y arrastra para rotar la escena y mirar a tu alrededor.</p>
+                <p>Consejo: Haz clic y arrastra para rotar los cubos.</p>
             </div>
         </section>
     </main>
@@ -93,18 +92,13 @@
     <script>
         // Variables globales para la escena Three.js
         let scene, camera, renderer;
+        let rotatingGroup; // Grupo que contendrá los cubos a rotar
 
-        // Variables para el control manual de la rotación de la CÁMARA
+        // Variables para el control manual de la rotación
         let isDragging = false;
         let previousMouseX = 0;
         let previousMouseY = 0;
-        const rotationSpeed = 0.005; // Velocidad de rotación de la cámara
-
-        // Variables para la posición esférica de la cámara
-        let cameraRadius;
-        let cameraTheta; // Ángulo horizontal (alrededor del eje Y)
-        let cameraPhi;   // Ángulo vertical (desde el polo superior, alrededor del eje X)
-        const cameraTarget = new THREE.Vector3(0, 0, 0); // Punto al que la cámara siempre mira
+        const rotationSpeed = 0.005; // Velocidad de rotación de los cubos
 
         // Obtener elementos del DOM
         const threeJsCanvas = document.getElementById('threeJsCanvas');
@@ -118,24 +112,21 @@
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xeeeeee); // Fondo gris claro
 
-            // 2. Cámara: Se usa OrthographicCamera para la vista isométrica
+            // 2. Cámara: Se cambia a OrthographicCamera para la vista isométrica
             const aspect = threeJsCanvas.offsetWidth / threeJsCanvas.offsetHeight;
-            const size = 6; // Determina el "zoom" o el área visible en la vista isométrica
+            const size = 3; // Determina el "zoom" o el área visible en la vista isométrica
             camera = new THREE.OrthographicCamera(
                 -size * aspect, size * aspect,
                 size, -size,
                 0.1, 1000
             );
 
-            // Posición inicial de la cámara para una vista isométrica del taller
-            // Esta posición se usará para calcular los ángulos iniciales (theta, phi)
-            camera.position.set(size * 1.5, size * 1.2, size * 1.5); // Ajustado para ver el taller
-            camera.lookAt(cameraTarget); // La cámara mira al origen del escenario
-
-            // Inicializar las coordenadas esféricas de la cámara
-            cameraRadius = camera.position.length(); // Distancia desde el origen
-            cameraTheta = Math.atan2(camera.position.x, camera.position.z); // Ángulo en el plano XZ
-            cameraPhi = Math.acos(camera.position.y / cameraRadius); // Ángulo desde el eje Y (vertical)
+            // Posición y rotación específicas para una vista isométrica
+            // Estos valores son estándar para una proyección isométrica común
+            camera.position.set(size, size, size); // Posición diagonal
+            camera.lookAt(0, 0, 0); // La cámara mira al origen
+            // Si necesitas ajustar la inclinación o el ángulo, puedes modificar camera.rotation
+            // Pero para un isométrico puro, lookAt(0,0,0) desde una posición simétrica es clave.
 
             // 3. Renderizador: Se encarga de dibujar la escena en el canvas HTML
             renderer = new THREE.WebGLRenderer({ canvas: threeJsCanvas, antialias: true });
@@ -144,16 +135,16 @@
 
             // 4. Luces: Necesarias para que los objetos sean visibles en 3D
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(5, 10, 7.5).normalize(); // Una luz desde arriba y un lado
+            directionalLight.position.set(0, 1, 1).normalize();
             scene.add(directionalLight);
 
-            const ambientLight = new THREE.AmbientLight(0x404040, 2); // Luz ambiental suave
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
             scene.add(ambientLight);
 
-            // 5. Crear el entorno del taller y el caballete
-            createStudioEnvironment();
+            // 5. Crear formas geométricas (los dos cubos)
+            createAbstractArt();
 
-            // 6. Configurar eventos para la rotación de la CÁMARA
+            // 6. Configurar eventos para el movimiento manual de la rotación de los cubos
             threeJsCanvas.addEventListener('mousedown', onMouseDown);
             threeJsCanvas.addEventListener('mouseup', onMouseUp);
             threeJsCanvas.addEventListener('mousemove', onMouseMove);
@@ -189,20 +180,12 @@
             const deltaX = event.clientX - previousMouseX;
             const deltaY = event.clientY - previousMouseY;
 
-            // Actualizar los ángulos theta y phi de la cámara
-            cameraTheta -= deltaX * rotationSpeed; // Rotación horizontal
-            cameraPhi += deltaY * rotationSpeed;   // Rotación vertical
+            // Rotar el grupo (que contiene los dos cubos) alrededor de sus ejes Y y X
+            rotatingGroup.rotation.y += deltaX * rotationSpeed;
+            rotatingGroup.rotation.x += deltaY * rotationSpeed;
 
-            // Limitar el ángulo phi para evitar que la cámara se invierta o pase los "polos"
-            // Se mantiene entre 0.1 (cerca de mirar hacia arriba) y Math.PI - 0.1 (cerca de mirar hacia abajo)
-            cameraPhi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPhi));
-
-            // Recalcular la posición de la cámara en coordenadas cartesianas
-            camera.position.x = cameraRadius * Math.sin(cameraPhi) * Math.sin(cameraTheta);
-            camera.position.y = cameraRadius * Math.cos(cameraPhi);
-            camera.position.z = cameraRadius * Math.sin(cameraPhi) * Math.cos(cameraTheta);
-
-            camera.lookAt(cameraTarget); // Asegurar que la cámara siempre mira al origen
+            // Opcional: Limitar la rotación en X para evitar que se voltee
+            // rotatingGroup.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotatingGroup.rotation.x));
 
             previousMouseX = event.clientX;
             previousMouseY = event.clientY;
@@ -233,105 +216,63 @@
             const deltaX = touch.clientX - previousTouchX;
             const deltaY = touch.clientY - previousTouchY;
 
-            // Lógica de rotación de la cámara similar a onMouseMove
-            cameraTheta -= deltaX * rotationSpeed;
-            cameraPhi += deltaY * rotationSpeed;
+            rotatingGroup.rotation.y += deltaX * rotationSpeed;
+            rotatingGroup.rotation.x += deltaY * rotationSpeed;
 
-            cameraPhi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPhi));
-
-            camera.position.x = cameraRadius * Math.sin(cameraPhi) * Math.sin(cameraTheta);
-            camera.position.y = cameraRadius * Math.cos(cameraPhi);
-            camera.position.z = cameraRadius * Math.sin(cameraPhi) * Math.cos(cameraTheta);
-
-            camera.lookAt(cameraTarget);
+            // Opcional: Limitar la rotación en X para evitar que se voltee
+            // rotatingGroup.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotatingGroup.rotation.x));
 
             previousTouchX = touch.clientX;
             previousTouchY = touch.clientY;
         }
 
-        // Función para crear el entorno del taller y el caballete
-        function createStudioEnvironment() {
-            // Materiales para el taller (tonos neutros para el entorno)
-            const floorMaterial = new THREE.MeshPhongMaterial({ color: 0x999999, side: THREE.DoubleSide }); // Gris oscuro
-            const wallMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc, side: THREE.DoubleSide }); // Gris claro
-            const easelMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513, flatShading: true }); // Marrón siena
+        // Función para crear las formas abstractas (los dos cubos coordinados)
+        function createAbstractArt() {
+            // Definición de materiales con colores básicos
+            const colors = [0xEF4444, 0x3B82F6, 0x22C55E, 0xFACC15, 0xA855F7, 0x8B5CF6, 0xEC4899];
+            const materials = colors.map(color => new THREE.MeshPhongMaterial({ color: color, flatShading: true, side: THREE.DoubleSide }));
 
-            // Suelo del taller
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMaterial);
-            floor.rotation.x = -Math.PI / 2; // Rotar para que sea horizontal
-            floor.position.y = -2; // Posicionar bajo el área de trabajo
-            scene.add(floor);
+            // Crear un grupo para que los cubos roten juntos
+            rotatingGroup = new THREE.Group();
+            scene.add(rotatingGroup);
 
-            // Pared trasera
-            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(10, 7), wallMaterial);
-            backWall.position.set(0, 1.5, -5); // Centrada, a una altura y profundidad adecuadas
-            scene.add(backWall);
+            // Primer cubo
+            const cube1Geometry = new THREE.BoxGeometry(1, 1, 1);
+            const cube1 = new THREE.Mesh(cube1Geometry, materials[0]); // Rojo
+            cube1.position.set(-0.6, 0, 0); // Posición relativa al centro del grupo
+            rotatingGroup.add(cube1);
 
-            // Pared lateral derecha (formando una esquina)
-            const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(10, 7), wallMaterial);
-            rightWall.rotation.y = Math.PI / 2; // Rotar 90 grados para que sea lateral
-            rightWall.position.set(5, 1.5, 0); // Posicionar a la derecha
-            scene.add(rightWall);
+            // Segundo cubo
+            const cube2Geometry = new THREE.BoxGeometry(1, 1, 1);
+            const cube2 = new THREE.Mesh(cube2Geometry, materials[1]); // Azul
+            cube2.position.set(0.6, 0, 0); // Posición relativa al centro del grupo
+            rotatingGroup.add(cube2);
 
-            // Caballete (easel)
-            const legThickness = 0.1;
-            const legHeight = 3;
-            const supportBarThickness = 0.1;
-            const supportBarLength = 1.5;
+            // Puedes ajustar las posiciones de los cubos dentro del grupo 'rotatingGroup'
+            // para que formen la figura compuesta que desees.
+            // Por ejemplo, para que estén apilados:
+            // cube1.position.set(0, 0.6, 0);
+            // cube2.position.set(0, -0.6, 0);
 
-            // Piernas del caballete (delantera izquierda, delantera derecha, trasera)
-            const legGeometry = new THREE.BoxGeometry(legThickness, legHeight, legThickness);
-
-            const frontLeftLeg = new THREE.Mesh(legGeometry, easelMaterial);
-            frontLeftLeg.position.set(-0.6, -2 + legHeight / 2, 0.6);
-            frontLeftLeg.rotation.z = Math.PI / 16; // Ligera inclinación
-            scene.add(frontLeftLeg);
-
-            const frontRightLeg = new THREE.Mesh(legGeometry, easelMaterial);
-            frontRightLeg.position.set(0.6, -2 + legHeight / 2, 0.6);
-            frontRightLeg.rotation.z = -Math.PI / 16; // Ligera inclinación
-            scene.add(frontRightLeg);
-
-            const backLeg = new THREE.Mesh(legGeometry, easelMaterial);
-            backLeg.position.set(0, -2 + legHeight / 2, -0.2);
-            backLeg.rotation.x = Math.PI / 5; // Inclinación hacia atrás
-            scene.add(backLeg);
-
-            // Barras de soporte (horizontales/diagonales)
-            const supportBarGeometry = new THREE.BoxGeometry(supportBarLength, supportBarThickness, supportBarThickness);
-
-            const lowerSupport = new THREE.Mesh(supportBarGeometry, easelMaterial);
-            lowerSupport.position.set(0, -0.5, 0.6);
-            scene.add(lowerSupport);
-
-            const upperSupport = new THREE.Mesh(supportBarGeometry, easelMaterial);
-            upperSupport.position.set(0, 1, 0.6);
-            scene.add(upperSupport);
-
-            // Barra horizontal donde descansa el lienzo
-            const canvasRestGeometry = new THREE.BoxGeometry(2, 0.2, 0.3);
-            const canvasRest = new THREE.Mesh(canvasRestGeometry, easelMaterial);
-            canvasRest.position.set(0, 0.5, 0.5); // Ajustar altura y profundidad
-            scene.add(canvasRest);
-
-            // El "lienzo" en el caballete (un plano simple, puedes usarlo para tus cubos)
-            const canvasGeometry = new THREE.PlaneGeometry(2, 2.5);
-            const canvasMaterial = new THREE.MeshPhongMaterial({ color: 0xF5F5DC, side: THREE.DoubleSide }); // Color beige para el lienzo
-            const canvasMesh = new THREE.Mesh(canvasGeometry, canvasMaterial);
-            canvasMesh.position.set(0, 1.75, 0.4); // Posición sobre el caballete
-            scene.add(canvasMesh);
+            // O formando una L:
+            // cube1.position.set(0, 0.5, 0);
+            // cube2.position.set(0.5, 0, 0);
         }
 
         // Función de animación: Este es el bucle principal de renderizado
         function animate() {
             requestAnimationFrame(animate);
+
+            // No hay rotación automática de los objetos, solo por interacción del usuario
+
+            // Renderizar la escena desde la perspectiva de la cámara
             renderer.render(scene, camera);
         }
 
         // Función para ajustar el tamaño del canvas y la cámara cuando la ventana se redimensiona
         function onWindowResize() {
             const aspect = threeJsCanvas.offsetWidth / threeJsCanvas.offsetHeight;
-            const size = 6; // Debe coincidir con el valor usado en initScene para la cámara
+            const size = 3; // Debe coincidir con el valor usado en initScene
 
             // Actualizar las propiedades de la OrthographicCamera
             camera.left = -size * aspect;
