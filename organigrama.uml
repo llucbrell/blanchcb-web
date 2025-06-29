@@ -1,0 +1,26 @@
+@startuml
+
+skinparam componentStyle rectangle
+
+rectangle "Nivel Estratégico" {
+  rectangle "Dirección del Museo" as Dir
+
+}
+
+rectangle "Nivel de Coordinación" {
+  rectangle "Coordinador de Proyecto" as PM
+}
+
+rectangle "Nivel Operativo" {
+  rectangle "Equipo de Tecnología" as Tech
+  rectangle "Equipo de Marketing y Comunicación" as Mkt
+  rectangle "Diseño y Gestión de Experiencias" as ExpDesign
+}
+
+Dir --> PM
+
+PM --> Tech
+PM --> Mkt
+PM --> ExpDesign
+
+@enduml

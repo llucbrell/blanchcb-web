@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Agentes en Museo</title>
+    <!-- Tailwind CSS CDN para un estilo moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Un gris muy claro, casi blanco */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-simulation-container {
+            /* Contenedor principal de la simulación, que contendrá controles y canvas */
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 100%; /* Take full width of its parent (section) */
+            max-width: 1200px; /* Max width for larger screens */
+            margin: 2rem auto; /* Centrar y añadir margen superior/inferior */
+        }
+        @media (min-width: 768px) {
+            .main-simulation-container {
+                flex-direction: row;
+            }
+        }
+        .controls-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .canvas-container {
+            flex: 2;
+            min-height: 400px; /* Altura mínima para el canvas */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e0e0e0; /* Fondo si la imagen no carga */
+            border-radius: 0.75rem;
+            overflow: hidden;
+            position: relative; /* Para posicionar el fondo */
+        }
+        canvas {
+            display: block;
+            background-color: #f8f8f8; /* Color de fondo si la imagen no carga */
+            border-radius: 0.75rem;
+            width: 100%;
+            height: 100%;
+        }
+        .control-group {
+            @apply p-4 bg-orange-50 rounded-lg shadow-inner; /* Usar bg-orange-50 para consistencia */
+        }
+        label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        input[type="text"],
+        input[type="color"],
+        select {
+            @apply mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm; /* Cambiar a orange-500 */
+        }
+        input[type="range"] {
+            @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer;
+        }
+        button {
+            @apply px-4 py-2 rounded-md font-semibold transition-colors duration-200;
+        }
+        button.primary {
+            @apply bg-orange-600 text-white hover:bg-orange-700 shadow-md; /* Cambiar a naranja */
+        }
+        button.success {
+            @apply bg-green-600 text-white hover:bg-green-700 shadow-md; /* Mantener verde para "éxito" */
+        }
+        button.danger {
+            @apply bg-red-600 text-white hover:bg-red-700 shadow-md; /* Mantener rojo para "peligro/parar" */
+        }
+        button.secondary { /* New style for secondary actions like clear */
+            @apply bg-gray-400 text-white hover:bg-gray-500 shadow-md;
+        }
+        .status-message {
+            @apply mt-4 p-3 bg-orange-100 text-orange-800 rounded-md text-sm; /* Cambiar a naranja */
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Posición el tooltip arriba del texto */
+            left: 50%;
+            margin-left: -100px; /* Usa la mitad del ancho para centrar */
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* New style for the single stacked bar chart */
+        #perRoomStackedBarChart {
+            width: 100%;
+            max-width: 600px; /* Adjust max-width as needed */
+            height: 350px; /* Adjust height as needed */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-orange-700 text-white p-6 shadow-lg rounded-b-lg">
+        <div class="container mx-auto flex justify-center items-center">
+            <h1 class="text-3xl font-bold text-center">Simulación de Agentes en el Museo</h1>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full flex justify-center items-center py-8">
+        <section id="agent-simulation-section" class="w-full">
+            <h1 class="text-3xl font-bold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2 text-center">
+                Simulación de Agentes en el Museo (IVAM)
+            </h1>
+            <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+                Observa cómo los "visitantes" (agentes) se mueven por las salas del museo. Puedes añadir diferentes tipos de agentes con distintos comportamientos y ver su interacción con el espacio delimitado.
+            </p>
+
+            <div class="main-simulation-container">
+                <div class="controls-section">
+                    <div class="control-group">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Añadir Nuevo Agente</h2>
+                        <div class="mb-3">
+                            <label for="agentType">Tipo Agente:</label>
+                            <input type="text" id="agentType" placeholder="Ej. Visitante, Guía">
+                        </div>
+                        <div class="mb-3">
+                            <label for="agentColor">Color:</label>
+                            <input type="color" id="agentColor" value="#1f77b4">
+                        </div>
+                        <div class="mb-3">
+                            <label for="agentSpeed" class="flex justify-between items-center">
+                                Velocidad:
+                                <span id="speedValue" class="text-gray-600 text-sm">1.0</span>
+                            </label>
+                            <input type="range" id="agentSpeed" min="0.5" max="5.0" step="0.1" value="1.0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="agentBehavior">Comportamiento:</label>
+                            <select id="agentBehavior">
+                                <option value="random">Aleatorio (Rebota en paredes)</option>
+                                <option value="walk_x">Caminar Horizontal</option>
+                                <option value="walk_y">Caminar Vertical</option>
+                                <option value="random_with_stops">Aleatorio con Paradas</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="initialRoom">Sala Inicial:</label>
+                            <select id="initialRoom">
+                                <!-- Las opciones se generarán con JavaScript -->
+                            </select>
+                            <div class="tooltip mt-1 text-xs text-gray-500">
+                                Los agentes se generarán en la sala seleccionada.
+                                <span class="tooltiptext">Define la sala de inicio del agente. Los agentes permanecerán dentro de los límites de esta sala.</span>
+                            </div>
+                        </div>
+                        <button id="addAgentBtn" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Añadir Agente</button>
+                    </div>
+
+                    <div class="control-group">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Controles de Simulación</h2>
+                        <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                            <button id="startSimulationBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full">Iniciar Simulación</button>
+                            <button id="stopSimulationBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full">Detener Simulación</button>
+                        </div>
+                        <button id="clearSimulationBtn" class="w-full bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full mb-4">Limpiar Simulador</button>
+                     
+                        <button id="extractDataBtn" class="w-full primary mb-4">Extraer Datos de Paradas (Consola)</button>
+                        <div id="statusMessage" class="status-message hidden"></div>
+                    </div>
+
+                    <div class="control-group">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Agentes Activos</h2>
+                        <ul id="agentList" class="text-sm text-gray-700">
+                            <!-- La lista de agentes se actualizará aquí -->
+                            <li class="text-gray-500">No hay agentes añadidos.</li>
+                        </ul>
+                    </div>
+
+                  
+
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="simulationCanvas"></canvas>
+                </div>
+            </div>
+               <div class="mb-8 p-4 bg-orange-50 rounded-md shadow-sm">
+                <h3 class="text-xl font-semibold text-orange-700 mb-4">Estadísticas</h3>
+                <div class="responsive-media">
+  <!-- Sección para la gráfica global de tipos de agentes -->
+                    <div class="control-group">
+
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Distribución Global de Agentes</h2>
+                   <button id="generateGlobalChartBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mb-4">Generar Gráfica de Tipos Global</button>  
+
+                        <div class="w-full max-w-sm mx-auto">
+                            <canvas id="globalAgentTypeChart"></canvas>
+                        </div>
+                        <div id="globalChartStatus" class="mt-4 p-2 bg-blue-100 text-blue-800 rounded-md text-sm hidden"></div>
+                    </div>
+
+                    <!-- Nueva sección para la única gráfica de barras apiladas por sala -->
+                    <div class="control-group">                       
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Distribución de Agentes por Sala (Apilada)</h2>
+                        <button id="generatePerRoomChartsBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Generar Gráficas por Salas</button> <!-- Botón para gráficas de sala -->
+
+                        <div class="w-full max-w-lg mx-auto"> <!-- Adjust width as needed for this chart -->
+                            <canvas id="perRoomStackedBarChart"></canvas>
+                        </div>
+                        <div id="perRoomChartStatus" class="mt-4 p-2 bg-blue-100 text-blue-800 rounded-md text-sm hidden">
+                            Pulsa 'Generar Gráficas por Salas' para ver la distribución.
+                        </div>
+                    </div>
+
+
+                </div>
+                <p class="text-gray-600 text-sm mt-4">
+                    
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-orange-700 text-white p-6 mt-8 rounded-t-lg">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Simulación de Agentes</p>
+            <p class="text-sm mt-2"></p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // --- Configuración del Canvas y la Simulación ---
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Constantes para el nuevo comportamiento "random_with_stops"
+        const STOP_MIN_SECONDS = 0.5; // Minimum stop duration in seconds
+        const STOP_MAX_SECONDS = 2.0; // Maximum stop duration in seconds
+        const MOVE_MIN_SECONDS = 2.0; // Minimum move duration in seconds
+        const MOVE_MAX_SECONDS = 5.0; // Maximum move duration in seconds
+        const FPS = 60; // Approximate frames per second for requestAnimationFrame
+
+        // Ruta de la imagen de la planta del museo (PLACEHOLDER)
+        // Por favor, reemplaza esta URL con la imagen real de tu planta de museo.
+        const MUSEUM_FLOOR_PLAN_IMAGE_URL = './assets/Planta_B-1.png'; // Make sure this path is correct
+        const museumImage = new Image();
+        museumImage.src = MUSEUM_FLOOR_PLAN_IMAGE_URL;
+
+        let agents = []; // Lista para almacenar todos los objetos Agente
+        let simulationRunning = false; // Bandera para controlar si la simulación está activa
+        let animationFrameId = null; // ID del requestAnimationFrame para detenerlo
+        let agentIdCounter = 0; // Contador para asignar IDs únicos a los agentes
+
+        // Variables para almacenar las dimensiones naturales de la imagen y la escala/offset actual de visualización
+        let imageNaturalWidth = 0;
+        let imageNaturalHeight = 0;
+        let displayScale = 1; // Factor de escala de las coordenadas de la imagen original a las del canvas
+        let displayOffsetX = 0; // Desplazamiento X para centrar la imagen en el canvas
+        let displayOffsetY = 0; // Desplazamiento Y para centrar la imagen en el canvas
+
+        let globalAgentTypeChartInstance = null; // Variable para almacenar la instancia de la gráfica global
+        let perRoomStackedBarChartInstance = null; // Variable para almacenar la instancia de la gráfica de barras apiladas por sala
+
+
+        // --- Definición de Salas (Límites) del Museo ---
+        // Estas son las "habitaciones" donde los agentes se moverán.
+        // Las coordenadas (x, y, width, height) aquí deben ser relativas a la resolución
+        // original de la imagen de tu planta de museo.
+        // Por ejemplo, si tu imagen es de 1200x800, un 'x: 50' significa 50 píxeles desde el borde izquierdo
+        // de la imagen de 1200 píxeles de ancho.
+        const rooms = [
+            { id: 'sala2', name: 'G1', x: 177, y: 368, width: 420, height: 112 },
+            { id: 'sala1', name: 'G2', x: 177, y: 210, width: 420, height: 112 },
+            { id: 'sala5', name: 'G3', x: 721, y: 210, width: 112, height: 112 },
+            { id: 'sala3', name: 'Vestíbulo', x: 610, y: 250, width: 100, height: 230 },
+            { id: 'sala4', name: 'Cafetería', x: 721, y: 384, width: 112, height: 100 }
+        ];
+
+        // --- Clase Agente ---
+        class Agent {
+            constructor(id, agentType, color, speed, behaviorType, initialRoomId) {
+                this.id = id;
+                this.type = agentType;
+                this.color = color; 
+                this.speed = speed;
+                this.behaviorType = behaviorType;
+                this.currentRoom = rooms.find(room => room.id === initialRoomId);
+
+                if (!this.currentRoom) {
+                    console.error(`Sala inicial no encontrada para el agente: ${initialRoomId}. Asignando a Sala 1.`);
+                    this.currentRoom = rooms[0]; // Fallback a la primera sala
+                }
+
+                // Posición inicial aleatoria dentro de la sala asignada (en el sistema de coordenadas de la imagen original)
+                this.x = randomRange(this.currentRoom.x, this.currentRoom.x + this.currentRoom.width);
+                this.y = randomRange(this.currentRoom.y, this.currentRoom.y + this.currentRoom.height);
+
+                // Velocidad direccional inicial (para 'random' y 'random_with_stops')
+                if (this.behaviorType === 'random' || this.behaviorType === 'random_with_stops') {
+                    const angle = Math.random() * 2 * Math.PI;
+                    this.vx = Math.cos(angle) * this.speed * 0.5;
+                    this.vy = Math.sin(angle) * this.speed * 0.5;
+                } else {
+                    this.vx = 0; // Comportamientos walk_x/y ajustan velocidad en move()
+                    this.vy = 0;
+                }
+
+                // Propiedades específicas para el comportamiento 'random_with_stops'
+                if (this.behaviorType === 'random_with_stops') {
+                    this.isStopped = false;
+                    // Duraciones en "frames" para que la lógica de movimiento sea consistente con el pasado
+                    this.moveDurationFrames = Math.floor(randomRange(MOVE_MIN_SECONDS, MOVE_MAX_SECONDS) * FPS);
+                    this.stopDurationFrames = Math.floor(randomRange(STOP_MIN_SECONDS, STOP_MAX_SECONDS) * FPS);
+                    this.currentActivityTimer = this.moveDurationFrames; // Empieza moviéndose
+                }
+                
+                // --- Propiedades para la Extracción de Datos de Paradas ---
+                this.stopData = []; // Array para almacenar los datos de cada parada
+            }
+
+            move() { // NO recibe deltaTime aquí para mantener la lógica que te funciona
+                let deltaX = 0;
+                let deltaY = 0;
+
+                if (this.behaviorType === 'random_with_stops') {
+                    this.currentActivityTimer--;
+
+                    if (this.isStopped) {
+                        // Agente está parado, no hay movimiento
+                        if (this.currentActivityTimer <= 0) {
+                            // Tiempo de parada terminado, empieza a moverse
+                            this.isStopped = false;
+                            // Recalcula la duración del movimiento para el siguiente ciclo
+                            this.moveDurationFrames = Math.floor(randomRange(MOVE_MIN_SECONDS, MOVE_MAX_SECONDS) * FPS);
+                            this.currentActivityTimer = this.moveDurationFrames;
+                            
+                            // Elige una nueva dirección aleatoria al comenzar a moverse
+                            const angle = Math.random() * 2 * Math.PI;
+                            this.vx = Math.cos(angle) * this.speed * 0.5;
+                            this.vy = Math.sin(angle) * this.speed * 0.5;
+                            deltaX = this.vx; // Mover en este mismo frame si ya se asignó nueva velocidad
+                            deltaY = this.vy;
+                        }
+                    } else { // Agente se está moviendo
+                        deltaX = this.vx;
+                        deltaY = this.vy;
+
+                        if (this.currentActivityTimer <= 0) {
+                            // Tiempo de movimiento terminado, empieza a parar
+                            this.isStopped = true;
+                            // Recalcula la duración de la parada para el siguiente ciclo
+                            this.stopDurationFrames = Math.floor(randomRange(STOP_MIN_SECONDS, STOP_MAX_SECONDS) * FPS);
+                            this.currentActivityTimer = this.stopDurationFrames;
+                            
+                            // *** Registrar datos de la parada ***
+                            this.stopData.push({
+                                x: this.x.toFixed(2), // Coordenada X actual
+                                y: this.y.toFixed(2), // Coordenada Y actual
+                                duration: (this.stopDurationFrames / FPS).toFixed(2), // Duración real de la parada en segundos
+                                satisfaction: (Math.random() * 9 + 1).toFixed(1) // Nivel de satisfacción aleatorio (1.0 a 10.0)
+                            });
+
+                            // El movimiento se detiene inmediatamente
+                            deltaX = 0;
+                            deltaY = 0;
+                        }
+                    }
+                } else if (this.behaviorType === 'random') {
+                    deltaX = this.vx;
+                    deltaY = this.vy;
+                } else if (this.behaviorType === 'walk_x') {
+                    deltaX = this.speed * (Math.random() * 2 - 1); // Rango de -velocidad a +velocidad
+                    deltaY = this.speed * (Math.random() * 0.2 - 0.1); // Pequeña desviación
+                } else if (this.behaviorType === 'walk_y') {
+                    deltaY = this.speed * (Math.random() * 2 - 1);
+                    deltaX = this.speed * (Math.random() * 0.2 - 0.1);
+                }
+
+                let nextX = this.x + deltaX;
+                let nextY = this.y + deltaY;
+
+                // --- Lógica de Rebote en los Límites de la Sala (en el sistema de coordenadas de la imagen original) ---
+                const room = this.currentRoom;
+
+                // Rebote y ajuste en el eje X
+                if (nextX < room.x) {
+                    nextX = room.x;
+                    if (this.behaviorType === 'random' || this.behaviorType === 'random_with_stops') {
+                        this.vx *= -1; // Invertir velocidad interna para un rebote consistente
+                    }
+                } else if (nextX > room.x + room.width) {
+                    nextX = room.x + room.width;
+                    if (this.behaviorType === 'random' || this.behaviorType === 'random_with_stops') {
+                        this.vx *= -1;
+                    }
+                }
+
+                // Rebote y ajuste en el eje Y
+                if (nextY < room.y) {
+                    nextY = room.y;
+                    if (this.behaviorType === 'random' || this.behaviorType === 'random_with_stops') {
+                        this.vy *= -1;
+                    }
+                } else if (nextY > room.y + room.height) {
+                    nextY = room.y + room.height;
+                    if (this.behaviorType === 'random' || this.behaviorType === 'random_with_stops') {
+                        this.vy *= -1;
+                    }
+                }
+
+                // Actualizar la posición final del agente
+                this.x = nextX;
+                this.y = nextY;
+
+                // Asegurar que el agente esté estrictamente dentro de los límites después de todos los cálculos (seguro adicional)
+                this.x = Math.max(room.x, Math.min(this.x, room.x + room.width));
+                this.y = Math.max(room.y, Math.min(this.y, room.y + room.height));
+            }
+
+            draw() {
+                // Convertir la posición del agente del sistema de coordenadas de la imagen original al canvas
+                const canvasX = this.x * displayScale + displayOffsetX;
+                const canvasY = this.y * displayScale + displayOffsetY;
+
+                ctx.beginPath();
+                ctx.arc(canvasX, canvasY, 5 * displayScale, 0, Math.PI * 2); // Escalar el tamaño del punto también
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        // --- Funciones Auxiliares ---
+        function randomRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function updateAgentListUI() {
+            const agentListElement = document.getElementById('agentList');
+            agentListElement.innerHTML = ''; // Limpiar lista existente
+            if (agents.length === 0) {
+                agentListElement.innerHTML = '<li class="text-gray-500">No hay agentes añadidos.</li>';
+                return;
+            }
+            agents.forEach(agent => {
+                const li = document.createElement('li');
+                // Estilizar el puntito en la lista con el color del agente
+                li.innerHTML = `<span style="color:${agent.color}; display:inline-block; width:10px; height:10px; border-radius:50%; background-color:${agent.color}; margin-right:5px; vertical-align:middle;"></span> ID: ${agent.id}, Tipo: ${agent.type}, Sala: ${agent.currentRoom.name}, Vel: ${agent.speed.toFixed(1)}`;
+                agentListElement.appendChild(li);
+            });
+        }
+
+        function showStatusMessage(message, type = 'info') {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.classList.remove('hidden', 'bg-orange-100', 'text-orange-800', 'bg-red-100', 'text-red-800');
+            if (type === 'info') {
+                statusElement.classList.add('bg-orange-100', 'text-orange-800');
+            } else if (type === 'error') {
+                statusElement.classList.add('bg-red-100', 'text-red-800');
+            }
+            statusElement.classList.remove('hidden');
+            setTimeout(() => {
+                statusElement.classList.add('hidden');
+            }, 3000); // Ocultar después de 3 segundos
+        }
+
+        // --- Funciones de Dibujo del Canvas ---
+        function drawMuseumMap() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas antes de dibujar el fondo
+
+            // Dibuja la imagen de fondo de la planta del museo
+            if (museumImage.complete && imageNaturalWidth > 0) {
+                // Dibujar la imagen escalada para llenar el canvas manteniendo el aspecto
+                ctx.drawImage(museumImage, displayOffsetX, displayOffsetY,
+                              imageNaturalWidth * displayScale, imageNaturalHeight * displayScale);
+            } else {
+                // Si la imagen no está cargada o es inválida, usa un color de fondo sólido
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#555555';
+                ctx.font = '20px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('Cargando planta del museo...', canvas.width / 2, canvas.height / 2);
+            }
+
+            // Dibuja los límites de las salas (opcional, para depuración y visualización)
+            rooms.forEach(room => {
+                const scaledX = room.x * displayScale + displayOffsetX;
+                const scaledY = room.y * displayScale + displayOffsetY;
+                const scaledWidth = room.width * displayScale;
+                const scaledHeight = room.height * displayScale;
+
+                ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)'; /* Naranja semitransparente */
+                ctx.lineWidth = 2;
+                ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+                ctx.fillStyle = 'rgba(120, 50, 0, 0.8)'; /* Naranja oscuro para el texto */
+                ctx.font = `bold ${Math.max(10, 14 * displayScale)}px Inter`; /* Escalar fuente, mínimo 10px */
+                ctx.fillText(room.name, scaledX + 5, scaledY + 20);
+            });
+        }
+
+        function drawSimulation() {
+            drawMuseumMap(); // Dibujar el mapa del museo
+            agents.forEach(agent => agent.draw()); // Dibujar todos los agentes
+        }
+
+        // --- Bucle de Simulación ---
+        function simulationLoop() {
+            if (!simulationRunning) {
+                return;
+            }
+            
+            agents.forEach(agent => agent.move());
+            drawSimulation(); // Redibujar todo el canvas con las nuevas posiciones
+
+            animationFrameId = requestAnimationFrame(simulationLoop);
+        }
+
+        // --- Funciones para Gráficos ---
+
+        // Función para la gráfica global de tipos de agentes (Doughnut Chart)
+        function generateGlobalAgentTypeChart() {
+            const agentTypeCounts = {};
+            const agentTypeColorsMap = {}; // Map specific agent types to their colors
+
+            agents.forEach(agent => {
+                agentTypeCounts[agent.type] = (agentTypeCounts[agent.type] || 0) + 1;
+                agentTypeColorsMap[agent.type] = agent.color; // Store the color for this specific type
+            });
+
+            const agentTypeLabels = Object.keys(agentTypeCounts);
+            const data = agentTypeLabels.map(label => agentTypeCounts[label]);
+            const agentTypeColors = agentTypeLabels.map(label => agentTypeColorsMap[label]); // Get colors based on collected types
+
+            const globalChartStatus = document.getElementById('globalChartStatus');
+
+            if (agents.length === 0) {
+                if (globalAgentTypeChartInstance) {
+                    globalAgentTypeChartInstance.destroy();
+                    globalAgentTypeChartInstance = null;
+                }
+                globalChartStatus.textContent = "Añade agentes para ver el gráfico de distribución global.";
+                globalChartStatus.classList.remove('hidden');
+                return;
+            }
+
+            globalChartStatus.classList.add('hidden'); // Oculta el mensaje si hay datos
+
+            const ctxGlobalChart = document.getElementById('globalAgentTypeChart').getContext('2d');
+
+            if (globalAgentTypeChartInstance) {
+                // Actualizar la gráfica existente
+                globalAgentTypeChartInstance.data.labels = agentTypeLabels;
+                globalAgentTypeChartInstance.data.datasets[0].data = data;
+                globalAgentTypeChartInstance.data.datasets[0].backgroundColor = agentTypeColors;
+                globalAgentTypeChartInstance.update();
+            } else {
+                // Crear una nueva gráfica
+                globalAgentTypeChartInstance = new Chart(ctxGlobalChart, {
+                    type: 'doughnut',
+                    data: {
+                        labels: agentTypeLabels,
+                        datasets: [{
+                            label: 'Porcentaje de Agentes por Tipo',
+                            data: data,
+                            backgroundColor: agentTypeColors,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distribución Global de Agentes por Tipo'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw;
+                                        const total = context.dataset.data.reduce((sum, current) => sum + current, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Función para la gráfica de barras apiladas por sala
+        function generatePerRoomStackedBarChart() {
+            const perRoomChartStatus = document.getElementById('perRoomChartStatus');
+            const ctxPerRoomChart = document.getElementById('perRoomStackedBarChart').getContext('2d');
+
+            // Collect data: labels (room names) and datasets (agent types counts per room)
+            const roomNames = rooms.map(room => room.name);
+            const uniqueAgentTypes = [...new Set(agents.map(agent => agent.type))]; // Get all unique agent types present
+            const uniqueAgentTypeColorsMap = {};
+            agents.forEach(agent => {
+                uniqueAgentTypeColorsMap[agent.type] = agent.color; // Map type to its color
+            });
+
+
+            const datasets = uniqueAgentTypes.map(type => {
+                const dataForType = rooms.map(room => {
+                    const agentsInRoomOfType = agents.filter(agent => 
+                        agent.currentRoom.id === room.id && agent.type === type
+                    ).length;
+                    return agentsInRoomOfType;
+                });
+                return {
+                    label: type,
+                    data: dataForType,
+                    backgroundColor: uniqueAgentTypeColorsMap[type], // Use the color from the map
+                    stack: 'roomStack' // All datasets share the same stack name for stacking
+                };
+            });
+
+            // Calculate totals per room for percentage calculation in tooltips
+            // This array is not strictly needed anymore for the tooltip, but kept if other parts might use it.
+            const totalsPerRoom = rooms.map(room => {
+                return agents.filter(agent => agent.currentRoom.id === room.id).length;
+            });
+
+            if (agents.length === 0) {
+                if (perRoomStackedBarChartInstance) {
+                    perRoomStackedBarChartInstance.destroy();
+                    perRoomStackedBarChartInstance = null;
+                }
+                perRoomChartStatus.textContent = "Añade agentes para ver las gráficas de distribución por sala.";
+                perRoomChartStatus.classList.remove('hidden');
+                return;
+            }
+
+            perRoomChartStatus.classList.add('hidden'); // Oculta el mensaje si hay datos
+
+            if (perRoomStackedBarChartInstance) {
+                // Update existing chart
+                perRoomStackedBarChartInstance.data.labels = roomNames;
+                perRoomStackedBarChartInstance.data.datasets = datasets;
+                perRoomStackedBarChartInstance.update();
+            } else {
+                // Create new chart
+                perRoomStackedBarChartInstance = new Chart(ctxPerRoomChart, {
+                    type: 'bar',
+                    data: {
+                        labels: roomNames,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // Allow custom height for better bar display
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distribución de Agentes por Tipo en Cada Sala'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.dataset.label || '';
+                                        const value = context.raw; // Value of the current segment (e.g., count of 'Visitante 15-29' in 'G1')
+                                        const roomIndex = context.dataIndex; // Index of the room (bar)
+                                        
+                                        // Recalculate total for this specific room's bar from all datasets
+                                        let totalInThisBar = 0;
+                                        context.chart.data.datasets.forEach(dataset => {
+                                            totalInThisBar += dataset.data[roomIndex] || 0;
+                                        });
+
+                                        const percentage = totalInThisBar > 0 ? ((value / totalInThisBar) * 100).toFixed(1) : 0;
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Sala del Museo'
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Número de Agentes'
+                                },
+                                // Optionally, if you want the Y-axis to display percentage based on total in room
+                                // This requires a custom tick formatter and careful calculation
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        // This callback is for the Y-axis tick labels.
+                                        // It's tricky to show percentage on stacked bars if the total for each bar varies.
+                                        // Keeping it as raw count for now.
+                                        return value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+
+        // --- Gestión de Eventos UI ---
+        document.getElementById('agentSpeed').addEventListener('input', (event) => {
+            document.getElementById('speedValue').textContent = parseFloat(event.target.value).toFixed(1);
+        });
+
+        document.getElementById('addAgentBtn').addEventListener('click', () => {
+            const agentType = document.getElementById('agentType').value.trim();
+            const selectedColor = document.getElementById('agentColor').value;
+            const agentSpeed = parseFloat(document.getElementById('agentSpeed').value);
+            const agentBehavior = document.getElementById('agentBehavior').value;
+            const initialRoomId = document.getElementById('initialRoom').value;
+
+            if (!agentType) {
+                showStatusMessage("Por favor, introduce un Tipo de Agente.", 'error');
+                return;
+            }
+            if (!initialRoomId) {
+                showStatusMessage("Por favor, selecciona una Sala Inicial.", 'error');
+                return;
+            }
+
+            // Usar el color seleccionado del picker para agentes nuevos
+            const agentColor = selectedColor; 
+
+            agentIdCounter++;
+            const newAgent = new Agent(agentIdCounter, agentType, agentColor, agentSpeed, agentBehavior, initialRoomId);
+            agents.push(newAgent);
+            showStatusMessage(`Agente '${agentType}' (ID: ${agentIdCounter}) añadido.`);
+            updateAgentListUI();
+            drawSimulation(); // Dibuja el nuevo agente inmediatamente
+        });
+
+        document.getElementById('startSimulationBtn').addEventListener('click', () => {
+            if (!simulationRunning) {
+                if (agents.length === 0) {
+                    showStatusMessage("Añade al menos un agente antes de iniciar la simulación.", 'error');
+                    return;
+                }
+                simulationRunning = true;
+                showStatusMessage("Simulación Iniciada...", 'info');
+                simulationLoop(); // Iniciar el bucle de animación
+            }
+        });
+
+        document.getElementById('stopSimulationBtn').addEventListener('click', () => {
+            if (simulationRunning) {
+                simulationRunning = false;
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId); // Detener la animación
+                }
+                showStatusMessage("Simulación Detenida.", 'info');
+            }
+        });
+
+        // --- Nuevo botón para limpiar el simulador ---
+        document.getElementById('clearSimulationBtn').addEventListener('click', () => {
+            if (simulationRunning) {
+                simulationRunning = false;
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+            }
+            agents = []; // Vaciar la lista de agentes
+            agentIdCounter = 0; // Resetear el contador de IDs
+            updateAgentListUI(); // Limpiar la lista en la UI
+            drawSimulation(); // Redibujar el canvas sin agentes
+            showStatusMessage("Simulador limpiado.", 'info');
+            
+            // Destruir la gráfica global
+            if (globalAgentTypeChartInstance) {
+                globalAgentTypeChartInstance.destroy();
+                globalAgentTypeChartInstance = null;
+                document.getElementById('globalChartStatus').classList.remove('hidden');
+                document.getElementById('globalChartStatus').textContent = "Pulsa 'Generar Gráfica de Tipos Global' para ver la distribución.";
+            }
+
+            // Destruir la gráfica de barras apiladas por sala
+            if (perRoomStackedBarChartInstance) {
+                perRoomStackedBarChartInstance.destroy();
+                perRoomStackedBarChartInstance = null;
+                document.getElementById('perRoomChartStatus').classList.remove('hidden');
+                document.getElementById('perRoomChartStatus').textContent = "Pulsa 'Generar Gráficas por Salas' para ver la distribución.";
+            }
+        });
+
+        // --- Función para Extraer Datos de la Simulación (modificada) ---
+        document.getElementById('extractDataBtn').addEventListener('click', () => {
+            // Detener la simulación si está corriendo para asegurar datos finales consistentes
+            if (simulationRunning) {
+                document.getElementById('stopSimulationBtn').click(); // Simula clic en Detener
+            }
+
+            const stoppedAgentsData = agents
+                .filter(agent => agent.behaviorType === 'random_with_stops')
+                .map(agent => ({
+                    agentId: agent.id,
+                    agentType: agent.type,
+                    agentColor: agent.color,
+                    stops: agent.stopData // Ya contiene las paradas con x, y, duration y satisfaction
+                }));
+
+            // Imprimir el JSON a la consola
+            console.log("--- Datos de Paradas de Agentes (JSON) ---");
+            console.log(JSON.stringify(stoppedAgentsData, null, 2));
+            showStatusMessage("Datos de paradas extraídos a la consola. Abre la Consola del navegador (F12).", 'info');
+        });
+
+        // --- Botón para generar la gráfica global ---
+        document.getElementById('generateGlobalChartBtn').addEventListener('click', () => {
+            if (agents.length === 0) {
+                showStatusMessage("Añade agentes antes de generar la gráfica global.", 'error');
+                return;
+            }
+            generateGlobalAgentTypeChart(); // Llama a la función para crear/actualizar la gráfica global
+            showStatusMessage("Gráfica global de tipos de agentes generada.", 'info');
+        });
+
+        // --- Botón para generar las gráficas por sala (Stacked Bar Chart) ---
+        document.getElementById('generatePerRoomChartsBtn').addEventListener('click', () => {
+            if (agents.length === 0) {
+                showStatusMessage("Añade agentes antes de generar las gráficas por salas.", 'error');
+                return;
+            }
+            generatePerRoomStackedBarChart(); // Llama a la función para crear/actualizar la gráfica de barras apiladas
+            showStatusMessage("Gráfica de distribución por sala generada.", 'info');
+        });
+
+
+        // --- Inicialización ---
+        window.onload = () => {
+            // Ajustar el tamaño del canvas al contenedor (y por lo tanto, responsivo)
+            const canvasContainer = document.querySelector('.canvas-container');
+
+            // Función para configurar el tamaño del canvas y calcular la escala de la imagen
+            const setCanvasSize = () => {
+                canvas.width = canvasContainer.clientWidth;
+                canvas.height = canvasContainer.clientHeight;
+
+                // Calcular la escala de la imagen para que encaje en el canvas manteniendo el aspecto
+                if (museumImage.complete && museumImage.naturalWidth > 0) {
+                    imageNaturalWidth = museumImage.naturalWidth;
+                    imageNaturalHeight = museumImage.naturalHeight;
+
+                    const imageAspectRatio = imageNaturalWidth / imageNaturalHeight;
+                    const canvasAspectRatio = canvas.width / canvas.height;
+
+                    let drawWidth, drawHeight;
+
+                    if (imageAspectRatio > canvasAspectRatio) {
+                        // La imagen es más ancha que el canvas, se ajusta por el ancho
+                        drawWidth = canvas.width;
+                        drawHeight = canvas.width / imageAspectRatio;
+                        displayOffsetX = 0;
+                        displayOffsetY = (canvas.height - drawHeight) / 2;
+                    } else {
+                        // La imagen es más alta que el canvas, se ajusta por la altura
+                        drawHeight = canvas.height;
+                        drawWidth = canvas.height * imageAspectRatio;
+                        displayOffsetX = (canvas.width - drawWidth) / 2;
+                        displayOffsetY = 0;
+                    }
+                    displayScale = drawWidth / imageNaturalWidth;
+                } else {
+                    // Si la imagen no está cargada, la escala es 1 y no hay offset
+                    displayScale = 1;
+                    displayOffsetX = 0;
+                    displayOffsetY = 0;
+                }
+
+                drawSimulation(); // Redibujar todo al cambiar el tamaño o al cargar la imagen
+            };
+
+            // Observar cambios de tamaño en el contenedor principal para ajustar el canvas
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    if (entry.target === canvasContainer) {
+                        setCanvasSize();
+                    }
+                }
+            });
+            resizeObserver.observe(canvasContainer);
+
+
+            // Cargar imagen del museo y redibujar cuando esté lista
+            museumImage.onload = () => {
+                setCanvasSize(); // Vuelve a calcular el tamaño y escala del canvas una vez cargada la imagen
+
+                // --- Añadir visitantes por defecto después de que la imagen se haya cargado y escalado ---
+                addDefaultAgents();
+            };
+            // Si la imagen ya está en caché o se carga rápidamente, asegurar que se dibuje
+            if (museumImage.complete) {
+                setCanvasSize();
+                addDefaultAgents(); // Add default agents if image is already loaded
+            } else {
+                // Mostrar un mensaje de carga si la imagen tarda
+                drawMuseumMap();
+            }
+
+
+            // Llenar el selector de salas
+            const initialRoomSelect = document.getElementById('initialRoom');
+            rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.id;
+                option.textContent = room.name;
+                initialRoomSelect.appendChild(option);
+            });
+
+            updateAgentListUI(); // Mostrar lista de agentes vacía al inicio
+            // Inicializa los mensajes de las gráficas
+            document.getElementById('globalChartStatus').classList.remove('hidden');
+            document.getElementById('globalChartStatus').textContent = "Pulsa 'Generar Gráfica de Tipos Global' para ver la distribución.";
+            document.getElementById('perRoomChartStatus').classList.remove('hidden');
+            document.getElementById('perRoomChartStatus').textContent = "Pulsa 'Generar Gráficas por Salas' para ver la distribución.";
+        };
+
+
+        // --- Función para añadir visitantes por defecto ---
+        function addDefaultAgents() {
+            // Ejemplo de visitantes por defecto con tipos y colores específicos
+            const defaultAgentsData = [
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala1' }, // Red
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala1' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala1' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala1' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala1' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala2' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala1' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala2' },
+                { type: 'Visitante 30-64', color: '#169c02', speed: 1.8, behavior: 'random_with_stops', room: 'sala1' }, // Green
+                { type: 'Visitante 30-64', color: '#169c02', speed: 1.8, behavior: 'random_with_stops', room: 'sala1' },
+                { type: 'Visitante 30-64', color: '#169c02', speed: 1.8, behavior: 'random_with_stops', room: 'sala2' },               
+                { type: 'Visitante 30-64', color: '#169c02', speed: 1.8, behavior: 'random_with_stops', room: 'sala2' },
+                { type: 'Visitante +65', color: '#0023ef', speed: 1.0, behavior: 'random', room: 'sala1' }, // Blue
+                { type: 'Visitante +65', color: '#0023ef', speed: 1.0, behavior: 'random', room: 'sala2' },
+                { type: 'Visitante +65', color: '#0023ef', speed: 1.0, behavior: 'random', room: 'sala2' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala5' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala5' },
+                { type: 'Visitante +65', color: '#0023ef', speed: 1.0, behavior: 'random', room: 'sala5' },        
+                { type: 'Visitante 30-64', color: '#169c02', speed: 1.8, behavior: 'random_with_stops', room: 'sala4' },               
+                { type: 'Visitante 30-64', color: '#169c02', speed: 1.8, behavior: 'random_with_stops', room: 'sala4' },
+               { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala3' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala3' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala3' },
+            ];
+
+            defaultAgentsData.forEach(data => {
+                agentIdCounter++;
+                const newAgent = new Agent(agentIdCounter, data.type, data.color, data.speed, data.behavior, data.room);
+                agents.push(newAgent);
+            });
+            showStatusMessage(`${defaultAgentsData.length} visitantes por defecto añadidos.`);
+            updateAgentListUI();
+            drawSimulation();
+        }
+
+    </script>
+</body>
+</html>
