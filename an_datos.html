@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulación de Agentes en Museo</title>
+    <title>Simulación de Visitantes en Museo</title>
     <!-- Tailwind CSS CDN para un estilo moderno y responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -161,20 +161,28 @@
 <body class="flex flex-col min-h-screen">
     <header class="bg-orange-700 text-white p-6 shadow-lg rounded-b-lg">
         <div class="container mx-auto flex justify-center items-center">
-            <h1 class="text-3xl font-bold text-center">Simulación de Agentes en el Museo</h1>
+            <h1 class="text-3xl font-bold text-center">Simulación de Visitantes en el Museo</h1>
         </div>
     </header>
 
     <main class="flex-grow w-full flex justify-center items-center py-8 flex-col">
         <section id="agent-simulation-section" class="w-full">
+            <div class="mb-8 p-4 bg-orange-50 rounded-md shadow-sm">
+
             <h1 class="text-3xl font-bold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2 text-center">
-                Simulación de Agentes en el Museo (IVAM)
+                Simulación de Visitantes en el Museo (IVAM)
             </h1>
             <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
-                Observa cómo los "visitantes" (agentes) se mueven por las salas del museo. Puedes añadir diferentes tipos de agentes con distintos comportamientos y ver su interacción con el espacio delimitado.
+                Observa cómo los "visitantes" (visitantes) se mueven por las salas del museo. Puedes añadir diferentes tipos de visitantes con distintos comportamientos y ver su interacción con el espacio delimitado.
             </p>
-
+<p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+    Encontrarás un grupo de visitantes ya creado por defecto, puedes animarlo símplemente pulsando sobre empezar simulación, y detenerla cuando ya creas que ha pasado el suficiente tiempo, luego genera las gráficas y comprueba la analítica de datos.
+</p>
+                <div class="canvas-container">
+                    <canvas id="simulationCanvas"></canvas>
+                </div>
             <div class="main-simulation-container">
+              
                 <div class="controls-section">
                     <div class="control-group">
                         <h2 class="text-xl font-semibold text-gray-700 mb-3">Añadir Nuevo Agente</h2>
@@ -196,9 +204,11 @@
                         <div class="mb-3">
                             <label for="agentBehavior">Comportamiento:</label>
                             <select id="agentBehavior">
+                               <!--
                                 <option value="random">Aleatorio (Rebota en paredes)</option>
                                 <option value="walk_x">Caminar Horizontal</option>
                                 <option value="walk_y">Caminar Vertical</option>
+                            -->
                                 <option value="random_with_stops">Aleatorio con Paradas</option>
                             </select>
                         </div>
@@ -208,11 +218,13 @@
                                 <!-- Las opciones se generarán con JavaScript -->
                             </select>
                             <div class="tooltip mt-1 text-xs text-gray-500">
-                                Los agentes se generarán en la sala seleccionada.
-                                <span class="tooltiptext">Define la sala de inicio del agente. Los agentes permanecerán dentro de los límites de esta sala.</span>
+                                Los visitantes se generarán en la sala seleccionada.
+                                <span class="tooltiptext">Define la sala de inicio del agente. Los visitantes permanecerán dentro de los límites de esta sala.</span>
                             </div>
                         </div>
                         <button id="addAgentBtn" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Añadir Agente</button>
+                                            <div id="statusMessage" class="status-message hidden"></div>
+
                     </div>
 
                     <div class="control-group">
@@ -223,54 +235,78 @@
                         </div>
                         <button id="clearSimulationBtn" class="w-full bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full mb-4">Limpiar Simulador</button>
                      
-                        <button id="extractDataBtn" class="w-full primary mb-4">Extraer Datos de Paradas (Consola)</button>
-                        <div id="statusMessage" class="status-message hidden"></div>
+                        <button id="extractDataBtn" style="visibility: hidden;" class="w-full primary mb-4">Extraer Datos de Paradas (Consola)</button>
                     </div>
 
                     <div class="control-group">
-                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Agentes Activos</h2>
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Visitantes Activos</h2>
                         <ul id="agentList" class="text-sm text-gray-700">
-                            <!-- La lista de agentes se actualizará aquí -->
-                            <li class="text-gray-500">No hay agentes añadidos.</li>
+                            <!-- La lista de visitantes se actualizará aquí -->
+                            <li class="text-gray-500">No hay visitantes añadidos.</li>
                         </ul>
                     </div>
                 </div>
-
-                <div class="canvas-container">
-                    <canvas id="simulationCanvas"></canvas>
-                </div>
+  
+              
             </div>
 
             <!-- Sección para las gráficas y el nuevo mapa de calor -->
             <div class="mb-8 p-4 bg-orange-50 rounded-md shadow-sm">
-                <h3 class="text-xl font-semibold text-orange-700 mb-4">Estadísticas</h3>
+                <h2 class="text-3xl text-center font-semibold text-orange-700 mb-4">Estadísticas</h2>
                 <div class="responsive-media">
-                    <!-- Sección para la gráfica global de tipos de agentes -->
+                    <!-- Sección para la gráfica global de tipos de visitantes -->
                     <div class="control-group">
-                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Distribución Global de Agentes</h2>
-                        <button id="generateGlobalChartBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mb-4">Generar Gráfica de Tipos Global</button>  
+                        <h2 class="text-xl text-center font-semibold text-gray-700 mb-3">Distribución Global de visitantes</h2>
+                       <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+                        Datos demográficos del porcentaje total de visitantes a museo.
+                                          </p>
+  
+                        <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+                        <button id="generateGlobalChartBtn" class="bg-blue-500  hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mb-4">Generar Gráfica de Tipos Global</button>  
+                    </p>
+                       <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+
+                                            <div id="globalChartStatus" class="mt-4 p-2 bg-blue-100 text-blue-800 rounded-md text-sm hidden"></div>
+                    </p>
+
                         <div class="w-full max-w-sm mx-auto">
                             <canvas id="globalAgentTypeChart"></canvas>
                         </div>
-                        <div id="globalChartStatus" class="mt-4 p-2 bg-blue-100 text-blue-800 rounded-md text-sm hidden"></div>
                     </div>
 
                     <!-- Nueva sección para la única gráfica de barras apiladas por sala -->
                     <div class="control-group">                       
-                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Distribución de Agentes por Sala (Apilada)</h2>
+                        <h2 class="text-xl text-center font-semibold text-gray-700 mb-3">Distribución de Visitantes por Sala (Apilada)</h2>
+                        <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+                        Porcentaje de visitantes por sala
+                         </p>
+                        <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+
                         <button id="generatePerRoomChartsBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Generar Gráficas por Salas</button> <!-- Botón para gráficas de sala -->
-                        <div class="w-full max-w-lg mx-auto"> <!-- Adjust width as needed for this chart -->
-                            <canvas id="perRoomStackedBarChart"></canvas>
-                        </div>
+                        </p>
+                        <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
                         <div id="perRoomChartStatus" class="mt-4 p-2 bg-blue-100 text-blue-800 rounded-md text-sm hidden">
                             Pulsa 'Generar Gráficas por Salas' para ver la distribución.
                         </div>
+                                                </p>
+
+                        <div class="w-full max-w-lg mx-auto"> <!-- Adjust width as needed for this chart -->
+                            <canvas id="perRoomStackedBarChart"></canvas>
+                        </div>
+                        
                     </div>
 
                     <!-- Nueva sección para la gráfica de índice de satisfacción por sala -->
                     <div class="control-group">
-                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Índice de Satisfacción por Sala</h2>
+                        
+                        <h2 class="text-xl font-semibold text-center text-gray-700 mb-3">Índice de Satisfacción por Sala</h2>
+                        <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+                        Nivel de satisfacción extraído de los visitantes en función de sus reacciones en cada parada de la simulación.
+                        </p>
+                        <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
                         <button id="generateSatisfactionChartBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Generar Gráfica de Satisfacción</button>
+
+                        </p>
                         <div class="w-full max-w-lg mx-auto">
                             <canvas id="satisfactionChart"></canvas>
                         </div>
@@ -284,6 +320,9 @@
             <!-- Nuevo contenedor para el mapa de calor -->
             <div class="heatmap-container">
                 <h2 class="text-xl font-semibold text-gray-700 mb-3">Mapa de Calor (Tiempo de Permanencia)</h2>
+                <p class="text-gray-700 mb-6 text-center max-w-2xl mx-auto">
+                    Lugares del museo en los que los visitantes se detubieron durante más tiempo.
+                </p>
                 <button id="generateHeatmapBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Generar Mapa de Calor</button>
                 <div id="heatmapStatus" class="mt-4 p-2 bg-blue-100 text-blue-800 rounded-md text-sm hidden">
                     Pulsa 'Generar Mapa de Calor' para ver las zonas de mayor permanencia.
@@ -295,7 +334,7 @@
 
     <footer class="bg-orange-700 text-white p-6 mt-8 rounded-t-lg">
         <div class="container mx-auto text-center">
-            <p>&copy; 2025 Simulación de Agentes</p>
+            <p>&copy; 2025 Blanca Cerveró Beltrán</p>
             <p class="text-sm mt-2"></p>
         </div>
     </footer>
@@ -326,7 +365,7 @@
         let agents = []; // Lista para almacenar todos los objetos Agente
         let simulationRunning = false; // Bandera para controlar si la simulación está activa
         let animationFrameId = null; // ID del requestAnimationFrame para detenerlo
-        let agentIdCounter = 0; // Contador para asignar IDs únicos a los agentes
+        let agentIdCounter = 0; // Contador para asignar IDs únicos a los visitantes
 
         // Variables para almacenar las dimensiones naturales de la imagen
         let imageNaturalWidth = 0;
@@ -353,7 +392,7 @@
 
 
         // --- Definición de Salas (Límites) del Museo ---
-        // Estas son las "habitaciones" donde los agentes se moverán.
+        // Estas son las "habitaciones" donde los visitantes se moverán.
         // Las coordenadas (x, y, width, height) aquí deben ser relativas a la resolución
         // original de la imagen de tu planta de museo.
         // Por ejemplo, si tu imagen es de 1200x800, un 'x: 50' significa 50 píxeles desde el borde izquierdo
@@ -541,7 +580,7 @@
             const agentListElement = document.getElementById('agentList');
             agentListElement.innerHTML = ''; // Limpiar lista existente
             if (agents.length === 0) {
-                agentListElement.innerHTML = '<li class="text-gray-500">No hay agentes añadidos.</li>';
+                agentListElement.innerHTML = '<li class="text-gray-500">No hay visitantes añadidos.</li>';
                 return;
             }
             agents.forEach(agent => {
@@ -606,7 +645,7 @@
         function drawSimulation() {
             // Usa las variables globales de escala y offset para el canvas principal
             drawMuseumMap(ctx, canvas, displayScale, displayOffsetX, displayOffsetY);
-            agents.forEach(agent => agent.draw()); // Dibujar todos los agentes
+            agents.forEach(agent => agent.draw()); // Dibujar todos los visitantes
         }
 
         // --- Bucle de Simulación ---
@@ -623,7 +662,7 @@
 
         // --- Funciones para Gráficos ---
 
-        // Función para la gráfica global de tipos de agentes (Doughnut Chart)
+        // Función para la gráfica global de tipos de visitantes (Doughnut Chart)
         function generateGlobalAgentTypeChart() {
             const agentTypeCounts = {};
             const agentTypeColorsMap = {}; // Map specific agent types to their colors
@@ -644,7 +683,7 @@
                     globalAgentTypeChartInstance.destroy();
                     globalAgentTypeChartInstance = null;
                 }
-                globalChartStatus.textContent = "Añade agentes para ver el gráfico de distribución global.";
+                globalChartStatus.textContent = "Añade visitantes para ver el gráfico de distribución global.";
                 globalChartStatus.classList.remove('hidden');
                 return;
             }
@@ -666,7 +705,7 @@
                     data: {
                         labels: agentTypeLabels,
                         datasets: [{
-                            label: 'Porcentaje de Agentes por Tipo',
+                            label: 'Porcentaje de Visitantes por Tipología',
                             data: data,
                             backgroundColor: agentTypeColors,
                             hoverOffset: 4
@@ -681,7 +720,7 @@
                             },
                             title: {
                                 display: true,
-                                text: 'Distribución Global de Agentes por Tipo'
+                                text: 'Distribución Global de Visitantes por Tipología'
                             },
                             tooltip: {
                                 callbacks: {
@@ -740,7 +779,7 @@
                     perRoomStackedBarChartInstance.destroy();
                     perRoomStackedBarChartInstance = null;
                 }
-                perRoomChartStatus.textContent = "Añade agentes para ver las gráficas de distribución por sala.";
+                perRoomChartStatus.textContent = "Añade visitantes para ver las gráficas de distribución por sala.";
                 perRoomChartStatus.classList.remove('hidden');
                 return;
             }
@@ -769,7 +808,7 @@
                             },
                             title: {
                                 display: true,
-                                text: 'Distribución de Agentes por Tipo en Cada Sala'
+                                text: 'Distribución de Visitantes por Tipología en Cada Sala'
                             },
                             tooltip: {
                                 callbacks: {
@@ -803,7 +842,7 @@
                                 beginAtZero: true,
                                 title: {
                                     display: true,
-                                    text: 'Número de Agentes'
+                                    text: 'Número de Visitantes'
                                 },
                                 // Optionally, if you want the Y-axis to display percentage based on total in room
                                 // This requires a custom tick formatter and careful calculation
@@ -868,7 +907,7 @@
                     satisfactionChartInstance.destroy();
                     satisfactionChartInstance = null;
                 }
-                satisfactionChartStatus.textContent = "Añade agentes con comportamiento 'Aleatorio con Paradas' para ver esta gráfica.";
+                satisfactionChartStatus.textContent = "Añade visitantes y/o genera datos de la simulación para ver esta gráfica.";
                 satisfactionChartStatus.classList.remove('hidden');
                 return;
             }
@@ -942,7 +981,7 @@
             drawMuseumMap(ctxHeatmap, heatmapCanvas, heatmapDisplayScale, heatmapDisplayOffsetX, heatmapDisplayOffsetY);
 
             if (Object.keys(heatmapData).length === 0 || maxDwellTime === 0) {
-                heatmapStatus.textContent = "Añade agentes con comportamiento 'Aleatorio con Paradas' y simula para generar el mapa de calor.";
+                heatmapStatus.textContent = "Añade visitantes y/o genera datos de la simulación para ver esta gráfica.";
                 heatmapStatus.classList.remove('hidden');
                 return;
             }
@@ -990,7 +1029,7 @@
                 return;
             }
 
-            // Usar el color seleccionado del picker para agentes nuevos
+            // Usar el color seleccionado del picker para visitantes nuevos
             const agentColor = selectedColor; 
 
             agentIdCounter++;
@@ -1008,7 +1047,7 @@
                     return;
                 }
                 simulationRunning = true;
-                showStatusMessage("Simulación Iniciada...", 'info');
+                showStatusMessage("Simulación Iniciada...  Mire el mapa de la parte superior", 'info');
                 simulationLoop(); // Iniciar el bucle de animación
             }
         });
@@ -1031,14 +1070,14 @@
                     cancelAnimationFrame(animationFrameId);
                 }
             }
-            agents = []; // Vaciar la lista de agentes
+            agents = []; // Vaciar la lista de visitantes
             agentIdCounter = 0; // Resetear el contador de IDs
             heatmapData = {}; // Limpiar datos del mapa de calor
             maxDwellTime = 0; // Resetear el tiempo máximo de permanencia
             ctxHeatmap.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height); // Limpiar el canvas de calor
             drawMuseumMap(ctxHeatmap, heatmapCanvas, heatmapDisplayScale, heatmapDisplayOffsetX, heatmapDisplayOffsetY); // Redibujar solo el mapa en el canvas de calor
             updateAgentListUI(); // Limpiar la lista en la UI
-            drawSimulation(); // Redibujar el canvas sin agentes
+            drawSimulation(); // Redibujar el canvas sin visitantes
             showStatusMessage("Simulador limpiado.", 'info');
             
             // Destruir la gráfica global
@@ -1087,7 +1126,7 @@
                 }));
 
             // Imprimir el JSON a la consola
-            console.log("--- Datos de Paradas de Agentes (JSON) ---");
+            console.log("--- Datos de Paradas de Visitantes (JSON) ---");
             console.log(JSON.stringify(stoppedAgentsData, null, 2));
             showStatusMessage("Datos de paradas extraídos a la consola. Abre la Consola del navegador (F12).", 'info');
         });
@@ -1095,17 +1134,17 @@
         // --- Botón para generar la gráfica global ---
         document.getElementById('generateGlobalChartBtn').addEventListener('click', () => {
             if (agents.length === 0) {
-                showStatusMessage("Añade agentes antes de generar la gráfica global.", 'error');
+                showStatusMessage("Añade visitantes antes de generar la gráfica global.", 'error');
                 return;
             }
             generateGlobalAgentTypeChart(); // Llama a la función para crear/actualizar la gráfica global
-            showStatusMessage("Gráfica global de tipos de agentes generada.", 'info');
+            showStatusMessage("Gráfica global de tipos de visitantes generada.", 'info');
         });
 
         // --- Botón para generar las gráficas por sala (Stacked Bar Chart) ---
         document.getElementById('generatePerRoomChartsBtn').addEventListener('click', () => {
             if (agents.length === 0) {
-                showStatusMessage("Añade agentes antes de generar las gráficas por salas.", 'error');
+                showStatusMessage("Añade visitantes antes de generar las gráficas por salas.", 'error');
                 return;
             }
             generatePerRoomStackedBarChart(); // Llama a la función para crear/actualizar la gráfica de barras apiladas
@@ -1115,7 +1154,7 @@
         // --- Botón para generar la gráfica de satisfacción por sala ---
         document.getElementById('generateSatisfactionChartBtn').addEventListener('click', () => {
             if (agents.filter(agent => agent.behaviorType === 'random_with_stops').length === 0) {
-                showStatusMessage("Añade agentes con comportamiento 'Aleatorio con Paradas' para generar la gráfica de satisfacción.", 'error');
+                showStatusMessage("Añade visitantes con comportamiento 'Aleatorio con Paradas' para generar la gráfica de satisfacción.", 'error');
                 return;
             }
             generateSatisfactionChart(); // Llama a la nueva función para crear/actualizar la gráfica de satisfacción
@@ -1126,7 +1165,7 @@
         document.getElementById('generateHeatmapBtn').addEventListener('click', () => {
             // Asegurarse de que el heatmapData esté actualizado antes de generar el mapa
             // No hay una actualización explícita aquí, se actualiza en agent.move()
-            // Si la simulación está parada y no se han movido agentes con paradas, el mapa estará vacío
+            // Si la simulación está parada y no se han movido visitantes con paradas, el mapa estará vacío
             generateHeatmap(); // Llama a la función para generar el mapa de calor
         });
 
@@ -1229,7 +1268,7 @@
             // Si la imagen ya está en caché o se carga rápidamente, asegurar que se dibuje
             if (museumImage.complete) {
                 setCanvasSize();
-                addDefaultAgents(); // Añadir agentes por defecto si la imagen ya está cargada
+                addDefaultAgents(); // Añadir visitantes por defecto si la imagen ya está cargada
             } else {
                 // Mostrar un mensaje de carga si la imagen tarda
                 drawMuseumMap(ctx, canvas, displayScale, displayOffsetX, displayOffsetY);
@@ -1246,7 +1285,7 @@
                 initialRoomSelect.appendChild(option);
             });
 
-            updateAgentListUI(); // Mostrar lista de agentes vacía al inicio
+            updateAgentListUI(); // Mostrar lista de visitantes vacía al inicio
             // Inicializa los mensajes de las gráficas
             document.getElementById('globalChartStatus').classList.remove('hidden');
             document.getElementById('globalChartStatus').textContent = "Pulsa 'Generar Gráfica de Tipos Global' para ver la distribución.";
