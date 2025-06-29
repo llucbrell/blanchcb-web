@@ -54,11 +54,35 @@
         }
         canvas {
             display: block;
-            background-color: #f8f8f8; /* Color de fondo si la imagen no carga */
             border-radius: 0.75rem;
+            /* La anchura y altura del elemento HTML son gestionadas por JS para responsividad,
+               pero se asegura que ocupe el 100% de su espacio disponible manteniendo el aspecto. */
             width: 100%;
-            height: 100%;
+            height: auto;
         }
+        #simulationCanvas {
+            background-color: #f8f8f8; /* Color de fondo si la imagen no carga */
+        }
+        /* Estilos para el nuevo contenedor del mapa de calor */
+        .heatmap-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centra el canvas dentro de este contenedor */
+        }
+        #heatmapCanvas {
+            background-color: #f8f8f8; /* Color de fondo para el canvas del mapa de calor */
+            border: 1px solid #ddd;
+            border-radius: 0.75rem;
+            margin-top: 1rem;
+        }
+
         .control-group {
             @apply p-4 bg-orange-50 rounded-lg shadow-inner; /* Usar bg-orange-50 para consistencia */
         }
@@ -127,7 +151,7 @@
             opacity: 1;
         }
         /* New style for the single stacked bar chart */
-        #perRoomStackedBarChart {
+        #perRoomStackedBarChart, #satisfactionChart {
             width: 100%;
             max-width: 600px; /* Adjust max-width as needed */
             height: 350px; /* Adjust height as needed */
@@ -141,7 +165,7 @@
         </div>
     </header>
 
-    <main class="flex-grow w-full flex justify-center items-center py-8">
+    <main class="flex-grow w-full flex justify-center items-center py-8 flex-col">
         <section id="agent-simulation-section" class="w-full">
             <h1 class="text-3xl font-bold text-orange-800 mb-6 border-b-2 border-orange-400 pb-2 text-center">
                 Simulación de Agentes en el Museo (IVAM)
@@ -210,24 +234,21 @@
                             <li class="text-gray-500">No hay agentes añadidos.</li>
                         </ul>
                     </div>
-
-                  
-
                 </div>
 
                 <div class="canvas-container">
                     <canvas id="simulationCanvas"></canvas>
                 </div>
             </div>
-               <div class="mb-8 p-4 bg-orange-50 rounded-md shadow-sm">
+
+            <!-- Sección para las gráficas y el nuevo mapa de calor -->
+            <div class="mb-8 p-4 bg-orange-50 rounded-md shadow-sm">
                 <h3 class="text-xl font-semibold text-orange-700 mb-4">Estadísticas</h3>
                 <div class="responsive-media">
-  <!-- Sección para la gráfica global de tipos de agentes -->
+                    <!-- Sección para la gráfica global de tipos de agentes -->
                     <div class="control-group">
-
                         <h2 class="text-xl font-semibold text-gray-700 mb-3">Distribución Global de Agentes</h2>
-                   <button id="generateGlobalChartBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mb-4">Generar Gráfica de Tipos Global</button>  
-
+                        <button id="generateGlobalChartBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mb-4">Generar Gráfica de Tipos Global</button>  
                         <div class="w-full max-w-sm mx-auto">
                             <canvas id="globalAgentTypeChart"></canvas>
                         </div>
@@ -238,7 +259,6 @@
                     <div class="control-group">                       
                         <h2 class="text-xl font-semibold text-gray-700 mb-3">Distribución de Agentes por Sala (Apilada)</h2>
                         <button id="generatePerRoomChartsBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Generar Gráficas por Salas</button> <!-- Botón para gráficas de sala -->
-
                         <div class="w-full max-w-lg mx-auto"> <!-- Adjust width as needed for this chart -->
                             <canvas id="perRoomStackedBarChart"></canvas>
                         </div>
@@ -247,11 +267,28 @@
                         </div>
                     </div>
 
-
+                    <!-- Nueva sección para la gráfica de índice de satisfacción por sala -->
+                    <div class="control-group">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Índice de Satisfacción por Sala</h2>
+                        <button id="generateSatisfactionChartBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Generar Gráfica de Satisfacción</button>
+                        <div class="w-full max-w-lg mx-auto">
+                            <canvas id="satisfactionChart"></canvas>
+                        </div>
+                        <div id="satisfactionChartStatus" class="mt-4 p-2 bg-blue-100 text-blue-800 rounded-md text-sm hidden">
+                            Pulsa 'Generar Gráfica de Satisfacción' para ver los datos.
+                        </div>
+                    </div>
                 </div>
-                <p class="text-gray-600 text-sm mt-4">
-                    
-                </p>
+            </div>
+
+            <!-- Nuevo contenedor para el mapa de calor -->
+            <div class="heatmap-container">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3">Mapa de Calor (Tiempo de Permanencia)</h2>
+                <button id="generateHeatmapBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Generar Mapa de Calor</button>
+                <div id="heatmapStatus" class="mt-4 p-2 bg-blue-100 text-blue-800 rounded-md text-sm hidden">
+                    Pulsa 'Generar Mapa de Calor' para ver las zonas de mayor permanencia.
+                </div>
+                <canvas id="heatmapCanvas"></canvas> <!-- Nuevo canvas para el mapa de calor -->
             </div>
         </section>
     </main>
@@ -269,6 +306,10 @@
         const canvas = document.getElementById('simulationCanvas');
         const ctx = canvas.getContext('2d');
         
+        // Nuevo canvas para el mapa de calor
+        const heatmapCanvas = document.getElementById('heatmapCanvas');
+        const ctxHeatmap = heatmapCanvas.getContext('2d');
+
         // Constantes para el nuevo comportamiento "random_with_stops"
         const STOP_MIN_SECONDS = 0.5; // Minimum stop duration in seconds
         const STOP_MAX_SECONDS = 2.0; // Maximum stop duration in seconds
@@ -287,15 +328,28 @@
         let animationFrameId = null; // ID del requestAnimationFrame para detenerlo
         let agentIdCounter = 0; // Contador para asignar IDs únicos a los agentes
 
-        // Variables para almacenar las dimensiones naturales de la imagen y la escala/offset actual de visualización
+        // Variables para almacenar las dimensiones naturales de la imagen
         let imageNaturalWidth = 0;
         let imageNaturalHeight = 0;
-        let displayScale = 1; // Factor de escala de las coordenadas de la imagen original a las del canvas
-        let displayOffsetX = 0; // Desplazamiento X para centrar la imagen en el canvas
-        let displayOffsetY = 0; // Desplazamiento Y para centrar la imagen en el canvas
+
+        // Variables para la escala y offset del canvas de SIMULACIÓN
+        let displayScale = 1; // Factor de escala de las coordenadas de la imagen original a las del canvas de simulación
+        let displayOffsetX = 0; // Desplazamiento X para centrar la imagen en el canvas de simulación
+        let displayOffsetY = 0; // Desplazamiento Y para centrar la imagen en el canvas de simulación
+
+        // Variables para la escala y offset del canvas del MAPA DE CALOR
+        let heatmapDisplayScale = 1; // Factor de escala para el canvas del mapa de calor
+        let heatmapDisplayOffsetX = 0; // Desplazamiento X para el canvas del mapa de calor
+        let heatmapDisplayOffsetY = 0; // Desplazamiento Y para el canvas del mapa de calor
 
         let globalAgentTypeChartInstance = null; // Variable para almacenar la instancia de la gráfica global
         let perRoomStackedBarChartInstance = null; // Variable para almacenar la instancia de la gráfica de barras apiladas por sala
+        let satisfactionChartInstance = null; // Variable para almacenar la instancia de la gráfica de satisfacción
+
+        // Datos para el mapa de calor
+        const HEATMAP_GRID_SIZE = 15; // Tamaño de cada celda de la cuadrícula del mapa de calor en píxeles (coordenadas de la imagen original)
+        let heatmapData = {}; // {'gridX_gridY': totalDwellTime}
+        let maxDwellTime = 0; // Para normalizar la opacidad del mapa de calor
 
 
         // --- Definición de Salas (Límites) del Museo ---
@@ -389,12 +443,24 @@
                             this.currentActivityTimer = this.stopDurationFrames;
                             
                             // *** Registrar datos de la parada ***
+                            const currentStopDuration = (this.stopDurationFrames / FPS);
                             this.stopData.push({
                                 x: this.x.toFixed(2), // Coordenada X actual
                                 y: this.y.toFixed(2), // Coordenada Y actual
-                                duration: (this.stopDurationFrames / FPS).toFixed(2), // Duración real de la parada en segundos
+                                duration: currentStopDuration.toFixed(2), // Duración real de la parada en segundos
                                 satisfaction: (Math.random() * 9 + 1).toFixed(1) // Nivel de satisfacción aleatorio (1.0 a 10.0)
                             });
+
+                            // Actualizar datos del mapa de calor
+                            const gridX = Math.floor(this.x / HEATMAP_GRID_SIZE);
+                            const gridY = Math.floor(this.y / HEATMAP_GRID_SIZE);
+                            const cellKey = `${gridX}_${gridY}`;
+                            heatmapData[cellKey] = (heatmapData[cellKey] || 0) + currentStopDuration;
+                            
+                            // Actualizar el tiempo máximo de permanencia
+                            if (heatmapData[cellKey] > maxDwellTime) {
+                                maxDwellTime = heatmapData[cellKey];
+                            }
 
                             // El movimiento se detiene inmediatamente
                             deltaX = 0;
@@ -502,42 +568,44 @@
         }
 
         // --- Funciones de Dibujo del Canvas ---
-        function drawMuseumMap() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas antes de dibujar el fondo
+        // Ahora acepta parámetros para escala y offset para mayor flexibilidad
+        function drawMuseumMap(targetCtx, targetCanvas, scale, offsetX, offsetY) {
+            targetCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height); // Limpiar el canvas antes de dibujar el fondo
 
             // Dibuja la imagen de fondo de la planta del museo
             if (museumImage.complete && imageNaturalWidth > 0) {
-                // Dibujar la imagen escalada para llenar el canvas manteniendo el aspecto
-                ctx.drawImage(museumImage, displayOffsetX, displayOffsetY,
-                              imageNaturalWidth * displayScale, imageNaturalHeight * displayScale);
+                // Dibujar la imagen escalada usando los parámetros proporcionados
+                targetCtx.drawImage(museumImage, offsetX, offsetY,
+                              imageNaturalWidth * scale, imageNaturalHeight * scale);
             } else {
                 // Si la imagen no está cargada o es inválida, usa un color de fondo sólido
-                ctx.fillStyle = '#f0f0f0';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#555555';
-                ctx.font = '20px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText('Cargando planta del museo...', canvas.width / 2, canvas.height / 2);
+                targetCtx.fillStyle = '#f0f0f0';
+                targetCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+                targetCtx.fillStyle = '#555555';
+                targetCtx.font = '20px Inter';
+                targetCtx.textAlign = 'center';
+                targetCtx.fillText('Cargando planta del museo...', targetCanvas.width / 2, targetCanvas.height / 2);
             }
 
             // Dibuja los límites de las salas (opcional, para depuración y visualización)
             rooms.forEach(room => {
-                const scaledX = room.x * displayScale + displayOffsetX;
-                const scaledY = room.y * displayScale + displayOffsetY;
-                const scaledWidth = room.width * displayScale;
-                const scaledHeight = room.height * displayScale;
+                const scaledX = room.x * scale + offsetX;
+                const scaledY = room.y * scale + offsetY;
+                const scaledWidth = room.width * scale;
+                const scaledHeight = room.height * scale;
 
-                ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)'; /* Naranja semitransparente */
-                ctx.lineWidth = 2;
-                ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
-                ctx.fillStyle = 'rgba(120, 50, 0, 0.8)'; /* Naranja oscuro para el texto */
-                ctx.font = `bold ${Math.max(10, 14 * displayScale)}px Inter`; /* Escalar fuente, mínimo 10px */
-                ctx.fillText(room.name, scaledX + 5, scaledY + 20);
+                targetCtx.strokeStyle = 'rgba(255, 165, 0, 0.7)'; /* Naranja semitransparente */
+                targetCtx.lineWidth = 2;
+                targetCtx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+                targetCtx.fillStyle = 'rgba(120, 50, 0, 0.8)'; /* Naranja oscuro para el texto */
+                targetCtx.font = `bold ${Math.max(10, 14 * scale)}px Inter`; /* Escalar fuente, mínimo 10px */
+                targetCtx.fillText(room.name, scaledX + 5, scaledY + 20);
             });
         }
 
         function drawSimulation() {
-            drawMuseumMap(); // Dibujar el mapa del museo
+            // Usa las variables globales de escala y offset para el canvas principal
+            drawMuseumMap(ctx, canvas, displayScale, displayOffsetX, displayOffsetY);
             agents.forEach(agent => agent.draw()); // Dibujar todos los agentes
         }
 
@@ -754,6 +822,152 @@
             }
         }
 
+        // Nueva función para la gráfica de índice de satisfacción por sala
+        function generateSatisfactionChart() {
+            const satisfactionChartStatus = document.getElementById('satisfactionChartStatus');
+            const ctxSatisfactionChart = document.getElementById('satisfactionChart').getContext('2d');
+
+            const roomSatisfactionData = {}; // { roomId: { totalSatisfaction: 0, stopCount: 0 } }
+
+            // Initialize room data
+            rooms.forEach(room => {
+                roomSatisfactionData[room.id] = { totalSatisfaction: 0, stopCount: 0 };
+            });
+
+            // Populate satisfaction data from agents' stopData
+            agents.forEach(agent => {
+                if (agent.behaviorType === 'random_with_stops' && agent.stopData.length > 0) {
+                    const room = agent.currentRoom;
+                    // Ensure the room exists in roomSatisfactionData before adding stops
+                    if (roomSatisfactionData[room.id]) { 
+                        agent.stopData.forEach(stop => {
+                            roomSatisfactionData[room.id].totalSatisfaction += parseFloat(stop.satisfaction);
+                            roomSatisfactionData[room.id].stopCount++;
+                        });
+                    }
+                }
+            });
+
+            const labels = rooms.map(room => room.name);
+            const data = rooms.map(room => {
+                const roomStats = roomSatisfactionData[room.id];
+                return roomStats.stopCount > 0 ? (roomStats.totalSatisfaction / roomStats.stopCount).toFixed(2) : 0;
+            });
+            const backgroundColors = data.map(avgSat => {
+                // Basic color scale from red (low) to green (high) satisfaction
+                const value = parseFloat(avgSat);
+                if (value >= 8) return '#4CAF50'; // Green
+                if (value >= 6) return '#8BC34A'; // Light Green
+                if (value >= 4) return '#FFEB3B'; // Yellow
+                if (value >= 2) return '#FFC107'; // Amber
+                return '#F44336'; // Red
+            });
+
+            if (agents.filter(agent => agent.behaviorType === 'random_with_stops').length === 0 || data.every(val => val === 0)) {
+                if (satisfactionChartInstance) {
+                    satisfactionChartInstance.destroy();
+                    satisfactionChartInstance = null;
+                }
+                satisfactionChartStatus.textContent = "Añade agentes con comportamiento 'Aleatorio con Paradas' para ver esta gráfica.";
+                satisfactionChartStatus.classList.remove('hidden');
+                return;
+            }
+
+            satisfactionChartStatus.classList.add('hidden'); // Oculta el mensaje si hay datos
+
+            if (satisfactionChartInstance) {
+                satisfactionChartInstance.data.labels = labels;
+                satisfactionChartInstance.data.datasets[0].data = data;
+                satisfactionChartInstance.data.datasets[0].backgroundColor = backgroundColors;
+                satisfactionChartInstance.update();
+            } else {
+                satisfactionChartInstance = new Chart(ctxSatisfactionChart, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Índice de Satisfacción Promedio',
+                            data: data,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color.replace('A', 'C')), // Slightly darker border
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false, // No legend needed for a single dataset
+                            },
+                            title: {
+                                display: true,
+                                text: 'Índice de Satisfacción Promedio por Sala (1-10)'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Satisfacción: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Sala del Museo'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 10, // Satisfaction scale from 1 to 10
+                                title: {
+                                    display: true,
+                                    text: 'Satisfacción Promedio'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Nueva función para generar el mapa de calor
+        function generateHeatmap() {
+            const heatmapStatus = document.getElementById('heatmapStatus');
+            ctxHeatmap.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height); // Limpiar el canvas de calor
+
+            // Dibujar el mapa del museo en el canvas del mapa de calor, usando sus propias escalas
+            drawMuseumMap(ctxHeatmap, heatmapCanvas, heatmapDisplayScale, heatmapDisplayOffsetX, heatmapDisplayOffsetY);
+
+            if (Object.keys(heatmapData).length === 0 || maxDwellTime === 0) {
+                heatmapStatus.textContent = "Añade agentes con comportamiento 'Aleatorio con Paradas' y simula para generar el mapa de calor.";
+                heatmapStatus.classList.remove('hidden');
+                return;
+            }
+            heatmapStatus.classList.add('hidden'); // Oculta el mensaje si hay datos
+
+            // Dibujar los puntos de calor
+            for (const cellKey in heatmapData) {
+                const [gridX, gridY] = cellKey.split('_').map(Number);
+                const dwellTime = heatmapData[cellKey];
+
+                // Calcular la opacidad basada en el tiempo de permanencia normalizado
+                const opacity = Math.min(1, Math.max(0.1, dwellTime / maxDwellTime)); // Min opacity to show even small values
+
+                // Convertir las coordenadas de la cuadrícula a las coordenadas del canvas de calor
+                // Asegúrate de que las coordenadas y el tamaño de la celda también se escalen con heatmapDisplayScale
+                const canvasX = (gridX * HEATMAP_GRID_SIZE * heatmapDisplayScale) + heatmapDisplayOffsetX;
+                const canvasY = (gridY * HEATMAP_GRID_SIZE * heatmapDisplayScale) + heatmapDisplayOffsetY;
+                const scaledCellSize = HEATMAP_GRID_SIZE * heatmapDisplayScale;
+
+                ctxHeatmap.fillStyle = `rgba(255, 0, 0, ${opacity})`; // Rojo para el calor
+                ctxHeatmap.fillRect(canvasX, canvasY, scaledCellSize, scaledCellSize);
+            }
+            showStatusMessage("Mapa de calor generado.", 'info');
+        }
+
 
         // --- Gestión de Eventos UI ---
         document.getElementById('agentSpeed').addEventListener('input', (event) => {
@@ -819,6 +1033,10 @@
             }
             agents = []; // Vaciar la lista de agentes
             agentIdCounter = 0; // Resetear el contador de IDs
+            heatmapData = {}; // Limpiar datos del mapa de calor
+            maxDwellTime = 0; // Resetear el tiempo máximo de permanencia
+            ctxHeatmap.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height); // Limpiar el canvas de calor
+            drawMuseumMap(ctxHeatmap, heatmapCanvas, heatmapDisplayScale, heatmapDisplayOffsetX, heatmapDisplayOffsetY); // Redibujar solo el mapa en el canvas de calor
             updateAgentListUI(); // Limpiar la lista en la UI
             drawSimulation(); // Redibujar el canvas sin agentes
             showStatusMessage("Simulador limpiado.", 'info');
@@ -838,6 +1056,18 @@
                 document.getElementById('perRoomChartStatus').classList.remove('hidden');
                 document.getElementById('perRoomChartStatus').textContent = "Pulsa 'Generar Gráficas por Salas' para ver la distribución.";
             }
+
+            // Destruir la gráfica de satisfacción
+            if (satisfactionChartInstance) {
+                satisfactionChartInstance.destroy();
+                satisfactionChartInstance = null;
+                document.getElementById('satisfactionChartStatus').classList.remove('hidden');
+                document.getElementById('satisfactionChartStatus').textContent = "Pulsa 'Generar Gráfica de Satisfacción' para ver los datos.";
+            }
+
+            // Resetear el estado del mapa de calor
+            document.getElementById('heatmapStatus').classList.remove('hidden');
+            document.getElementById('heatmapStatus').textContent = "Pulsa 'Generar Mapa de Calor' para ver las zonas de mayor permanencia.";
         });
 
         // --- Función para Extraer Datos de la Simulación (modificada) ---
@@ -882,76 +1112,128 @@
             showStatusMessage("Gráfica de distribución por sala generada.", 'info');
         });
 
+        // --- Botón para generar la gráfica de satisfacción por sala ---
+        document.getElementById('generateSatisfactionChartBtn').addEventListener('click', () => {
+            if (agents.filter(agent => agent.behaviorType === 'random_with_stops').length === 0) {
+                showStatusMessage("Añade agentes con comportamiento 'Aleatorio con Paradas' para generar la gráfica de satisfacción.", 'error');
+                return;
+            }
+            generateSatisfactionChart(); // Llama a la nueva función para crear/actualizar la gráfica de satisfacción
+            showStatusMessage("Gráfica de índice de satisfacción por sala generada.", 'info');
+        });
+
+        // --- Botón para generar el mapa de calor ---
+        document.getElementById('generateHeatmapBtn').addEventListener('click', () => {
+            // Asegurarse de que el heatmapData esté actualizado antes de generar el mapa
+            // No hay una actualización explícita aquí, se actualiza en agent.move()
+            // Si la simulación está parada y no se han movido agentes con paradas, el mapa estará vacío
+            generateHeatmap(); // Llama a la función para generar el mapa de calor
+        });
+
 
         // --- Inicialización ---
         window.onload = () => {
             // Ajustar el tamaño del canvas al contenedor (y por lo tanto, responsivo)
             const canvasContainer = document.querySelector('.canvas-container');
+            const heatmapContainer = document.querySelector('.heatmap-container'); // Nuevo contenedor para el mapa de calor
 
             // Función para configurar el tamaño del canvas y calcular la escala de la imagen
             const setCanvasSize = () => {
-                canvas.width = canvasContainer.clientWidth;
-                canvas.height = canvasContainer.clientHeight;
-
-                // Calcular la escala de la imagen para que encaje en el canvas manteniendo el aspecto
-                if (museumImage.complete && museumImage.naturalWidth > 0) {
-                    imageNaturalWidth = museumImage.naturalWidth;
-                    imageNaturalHeight = museumImage.naturalHeight;
-
-                    const imageAspectRatio = imageNaturalWidth / imageNaturalHeight;
-                    const canvasAspectRatio = canvas.width / canvas.height;
-
-                    let drawWidth, drawHeight;
-
-                    if (imageAspectRatio > canvasAspectRatio) {
-                        // La imagen es más ancha que el canvas, se ajusta por el ancho
-                        drawWidth = canvas.width;
-                        drawHeight = canvas.width / imageAspectRatio;
-                        displayOffsetX = 0;
-                        displayOffsetY = (canvas.height - drawHeight) / 2;
-                    } else {
-                        // La imagen es más alta que el canvas, se ajusta por la altura
-                        drawHeight = canvas.height;
-                        drawWidth = canvas.height * imageAspectRatio;
-                        displayOffsetX = (canvas.width - drawWidth) / 2;
-                        displayOffsetY = 0;
-                    }
-                    displayScale = drawWidth / imageNaturalWidth;
-                } else {
-                    // Si la imagen no está cargada, la escala es 1 y no hay offset
-                    displayScale = 1;
-                    displayOffsetX = 0;
-                    displayOffsetY = 0;
+                if (!museumImage.complete || museumImage.naturalWidth === 0) {
+                    // La imagen aún no está cargada o es inválida. Establecer tamaños de fallback y salir.
+                    canvas.width = canvas.parentElement.clientWidth;
+                    canvas.height = 400; 
+                    heatmapCanvas.width = heatmapCanvas.parentElement.clientWidth;
+                    heatmapCanvas.height = 400;
+                    drawMuseumMap(ctx, canvas, 1, 0, 0); // Dibujar fallback para el principal
+                    drawMuseumMap(ctxHeatmap, heatmapCanvas, 1, 0, 0); // Dibujar fallback para el mapa de calor
+                    return;
                 }
 
-                drawSimulation(); // Redibujar todo al cambiar el tamaño o al cargar la imagen
+                imageNaturalWidth = museumImage.naturalWidth;
+                imageNaturalHeight = museumImage.naturalHeight;
+                const imageAspectRatio = imageNaturalWidth / imageNaturalHeight;
+
+                // --- Tamaño del Canvas de Simulación Principal ---
+                const simContainerWidth = canvasContainer.clientWidth;
+                const simContainerHeight = canvasContainer.clientHeight;
+                
+                // Establecer la resolución interna del canvas de simulación para que coincida con su contenedor visible
+                canvas.width = simContainerWidth;
+                canvas.height = simContainerHeight;
+
+                // Calcular la escala y los offsets para dibujar la imagen del museo *dentro* de este canvas principal
+                let imgScaledWidth, imgScaledHeight;
+                const canvasAspectRatio = canvas.width / canvas.height;
+
+                if (imageAspectRatio > canvasAspectRatio) {
+                    // La imagen es más ancha con respecto a su altura que el canvas. Ajustar por el ancho del canvas.
+                    imgScaledWidth = canvas.width;
+                    imgScaledHeight = canvas.width / imageAspectRatio;
+                } else {
+                    // La imagen es más alta con respecto a su ancho que el canvas. Ajustar por la altura del canvas.
+                    imgScaledHeight = canvas.height;
+                    imgScaledWidth = canvas.height * imageAspectRatio;
+                }
+                
+                displayScale = imgScaledWidth / imageNaturalWidth;
+                displayOffsetX = (canvas.width - imgScaledWidth) / 2;
+                displayOffsetY = (canvas.height - imgScaledHeight) / 2;
+
+                // --- Tamaño del Canvas del Mapa de Calor ---
+                const heatmapContainerWidth = heatmapContainer.clientWidth;
+                
+                // El canvas del mapa de calor debe tener una resolución interna que coincida con la relación de aspecto de la imagen
+                // y se ajuste al ancho de su contenedor.
+                const effectiveHeatmapCanvasWidth = heatmapContainerWidth;
+                const effectiveHeatmapCanvasHeight = heatmapContainerWidth / imageAspectRatio;
+
+                heatmapCanvas.width = effectiveHeatmapCanvasWidth;
+                heatmapCanvas.height = effectiveHeatmapCanvasHeight;
+
+                // Para el dibujo del mapa en el canvas de calor, la escala es la que ajusta la imagen original al tamaño interno del canvas.
+                // Como el canvas.width y canvas.height ya se han ajustado para mantener el aspecto y llenar el ancho,
+                // la escala será 1 y los offsets 0 si la imagen se dibuja directamente en este canvas interno.
+                heatmapDisplayScale = effectiveHeatmapCanvasWidth / imageNaturalWidth; // Esto debería ser 1 si heatmapCanvas.width ya es la imagen Natural Ancho
+                heatmapDisplayOffsetX = 0; 
+                heatmapDisplayOffsetY = 0; 
+                
+                drawSimulation(); // Utiliza displayScale, displayOffsetX/Y para el canvas principal
+                
+                // Vuelve a dibujar el fondo del mapa de calor al cambiar el tamaño, y luego la superposición de calor
+                drawMuseumMap(ctxHeatmap, heatmapCanvas, heatmapDisplayScale, heatmapDisplayOffsetX, heatmapDisplayOffsetY);
+                
+                if (Object.keys(heatmapData).length > 0 && maxDwellTime > 0) {
+                     generateHeatmap();
+                }
             };
 
             // Observar cambios de tamaño en el contenedor principal para ajustar el canvas
             const resizeObserver = new ResizeObserver(entries => {
                 for (let entry of entries) {
-                    if (entry.target === canvasContainer) {
+                    if (entry.target === canvasContainer || entry.target === heatmapContainer) {
                         setCanvasSize();
                     }
                 }
             });
             resizeObserver.observe(canvasContainer);
+            resizeObserver.observe(heatmapContainer);
 
 
             // Cargar imagen del museo y redibujar cuando esté lista
             museumImage.onload = () => {
                 setCanvasSize(); // Vuelve a calcular el tamaño y escala del canvas una vez cargada la imagen
-
                 // --- Añadir visitantes por defecto después de que la imagen se haya cargado y escalado ---
                 addDefaultAgents();
             };
             // Si la imagen ya está en caché o se carga rápidamente, asegurar que se dibuje
             if (museumImage.complete) {
                 setCanvasSize();
-                addDefaultAgents(); // Add default agents if image is already loaded
+                addDefaultAgents(); // Añadir agentes por defecto si la imagen ya está cargada
             } else {
                 // Mostrar un mensaje de carga si la imagen tarda
-                drawMuseumMap();
+                drawMuseumMap(ctx, canvas, displayScale, displayOffsetX, displayOffsetY);
+                drawMuseumMap(ctxHeatmap, heatmapCanvas, heatmapDisplayScale, heatmapDisplayOffsetX, heatmapDisplayOffsetY); // También en el canvas de calor
             }
 
 
@@ -970,6 +1252,10 @@
             document.getElementById('globalChartStatus').textContent = "Pulsa 'Generar Gráfica de Tipos Global' para ver la distribución.";
             document.getElementById('perRoomChartStatus').classList.remove('hidden');
             document.getElementById('perRoomChartStatus').textContent = "Pulsa 'Generar Gráficas por Salas' para ver la distribución.";
+            document.getElementById('satisfactionChartStatus').classList.remove('hidden');
+            document.getElementById('satisfactionChartStatus').textContent = "Pulsa 'Generar Gráfica de Satisfacción' para ver los datos.";
+            document.getElementById('heatmapStatus').classList.remove('hidden');
+            document.getElementById('heatmapStatus').textContent = "Pulsa 'Generar Mapa de Calor' para ver las zonas de mayor permanencia.";
         };
 
 
@@ -997,7 +1283,7 @@
                 { type: 'Visitante +65', color: '#0023ef', speed: 1.0, behavior: 'random', room: 'sala5' },        
                 { type: 'Visitante 30-64', color: '#169c02', speed: 1.8, behavior: 'random_with_stops', room: 'sala4' },               
                 { type: 'Visitante 30-64', color: '#169c02', speed: 1.8, behavior: 'random_with_stops', room: 'sala4' },
-               { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala3' },
+                { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala3' },
                 { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala3' },
                 { type: 'Visitante 15-29', color: '#ef0000', speed: 1.5, behavior: 'random_with_stops', room: 'sala3' },
             ];
